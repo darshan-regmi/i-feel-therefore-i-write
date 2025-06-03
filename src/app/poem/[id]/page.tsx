@@ -2,18 +2,16 @@ import { getPoemById, getAllPoemIds } from '@/data/poems';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-type PoemPageProps = {
-  params: {
-    id: string;
-  };
-};
-
 export function generateStaticParams() {
   const ids = getAllPoemIds();
   return ids.map(id => ({ id }));
 }
 
-export default function PoemPage({ params }: PoemPageProps) {
+export default function PoemPage({ 
+  params,
+}: { 
+  params: { id: string } 
+}) {
   const poem = getPoemById(params.id);
   
   if (!poem) {
