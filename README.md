@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🌿 i feel, therefore i write  
+_a collection of verses and emotions — raw, real, human._
 
-## Getting Started
+> “for anyone who’s ever felt too much, or not enough.”
 
-First, run the development server:
+**i feel, therefore i write** is a minimalist poetry-sharing web app built with Next.js, celebrating vulnerability, creativity, and quiet fire. It offers a clean, soulful space to post and read personal poems — where design meets emotion.
+
+---
+
+# ✨ Features
+- 🖋️ Read original poems in a quiet, thoughtful space — where words breathe.
+- 🎨 Soft, serif-centered design that feels more like a journal than a website.
+- ⚡ Fast and fluid — built with Next.js for a seamless, distraction-free flow.
+- 🧠 Typed with care — structured in TypeScript for clarity and future growth.
+
+---
+
+## 🛠 Tech Stack
+
+- [Next.js](https://nextjs.org/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [ESLint](https://eslint.org/)
+- [Turbopack](https://turbo.build/pack)
+
+---
+
+## 📦 Getting Started
 
 ```bash
+# Clone the repo
+git clone https://github.com/darshan-regmi/i-feel-therefore-i-write.git
+
+# Navigate into the directory
+cd i-feel-therefore-i-write
+
+# Install dependencies
+npm install
+
+# Start the development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+# 📌 Project Structure (App Router)
+```bash
+/app
+    ├── favicon.ico
+    ├── globals.css     # Global styles
+    ├── layout.tsx      # Main layout component
+    ├── page.tsx        # Home page
+    └── poem
+        └── page.tsx   # Poem detail page
+```
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+# 💭 Inspiration
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This project is a digital reflection of deep feeling and artistic expression. It’s built for poets, feelers, and quiet creators who believe that vulnerability is strength.
 
-## Learn More
+> “I am made of quiet fire.”
 
-To learn more about Next.js, take a look at the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# 🧑‍💻 Author
 
-## Deploy on Vercel
+Darshan Regmi – [@wordsbydarshan](https://instagram.com/wordsbydarshan)
+Poet | Developer | Human
+🌐 “I code as I write — with heart.”
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# 🪶 License
+
+### This project is not open-source.
+
+All code, design, and written content (including poems) are the personal and original work of Darshan Regmi (@wordsbydarshan).
+Unauthorized use, distribution, or reproduction of any part of this project is strictly prohibited.
+
+If you’d like to collaborate, showcase, or discuss the project — feel free to reach out.
+
+### 📬  DM via [Instagram](https://instagram.com/wordsbydarshan)
