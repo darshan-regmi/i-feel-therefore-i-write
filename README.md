@@ -65,7 +65,7 @@ This project is a digital reflection of deep feeling and artistic expression. It
 
 Darshan Regmi – [@wordsbydarshan](https://instagram.com/wordsbydarshan)
 Poet | Developer | Human
-🌐 “I code as I write — with heart.”
+_“I code as I write — with heart.”_
 
 ---
 
