@@ -7,12 +7,10 @@ export function generateStaticParams() {
   return ids.map(id => ({ id }));
 }
 
-export default function PoemPage({ 
-  params,
-}: { 
-  params: { id: string } 
-}) {
-  const poem = getPoemById(params.id);
+// Next.js 15 expects a simpler component structure
+export default function PoemPage(props: any) {
+  const { id } = props.params;
+  const poem = getPoemById(id);
   
   if (!poem) {
     notFound();
