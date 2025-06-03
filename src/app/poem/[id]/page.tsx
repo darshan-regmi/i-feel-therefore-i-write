@@ -2,19 +2,15 @@ import { getPoemById, getAllPoemIds } from '@/data/poems';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-export function generateStaticParams() {
-  const ids = getAllPoemIds();
-  return ids.map(id => ({ id }));
+export async function generateStaticParams() {
+  const ids = getAllPoemIds(); // Should return something like ['poem-1', 'poem-2']
+  return ids.map(id => ({ id })); // → [{ id: 'poem-1' }, ...]
 }
 
-// Next.js 15 expects a simpler component structure
-export default function PoemPage(props: any) {
-  const { id } = props.params;
-  const poem = getPoemById(id);
+export default function PoemPage({ params }: { params: { id: string } }) {
+  const poem = getPoemById(params.id);
   
-  if (!poem) {
-    notFound();
-  }
+  if (!poem) notFound();
 
   return (
     <main className="min-h-screen bg-white text-gray-900 flex flex-col items-center p-8">
@@ -24,7 +20,6 @@ export default function PoemPage(props: any) {
       
       <article className="w-full max-w-2xl">
         <h1 className="text-4xl font-serif text-center mb-6">{poem.title}</h1>
-        
         <div className={`p-8 ${poem.backgroundColor ?? 'bg-blush'} rounded-2xl shadow-md text-xl font-light leading-relaxed`}>
           {poem.content.split('\n').map((line, i) => (
             <p key={i} className="mb-4">{line}</p>

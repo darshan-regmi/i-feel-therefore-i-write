@@ -7,7 +7,7 @@ export default function Home() {
         i feel, therefore i write
       </h1>
       <p className="mt-6 text-lg max-w-xl text-center text-gray-600">
-        for anyone who's ever felt too much, or not enough.
+        for anyone who&#39;s ever felt too much, or not enough.
       </p>
     
       <Link
