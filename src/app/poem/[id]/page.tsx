@@ -3,13 +3,13 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 export async function generateStaticParams() {
-  const ids = getAllPoemIds(); // Should return something like ['poem-1', 'poem-2']
-  return ids.map(id => ({ id })); // → [{ id: 'poem-1' }, ...]
+  const ids = getAllPoemIds(); // ['poem-1', 'poem-2']
+  return ids.map(id => ({ id }));
 }
 
-export default function PoemPage({ params }: { params: { id: string } }) {
+export default async function PoemPage({ params }: { params: { id: string } }) {
   const poem = getPoemById(params.id);
-  
+
   if (!poem) notFound();
 
   return (
