@@ -1,6 +1,7 @@
 import { getPoemById, getAllPoemIds } from '@/data/poems';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { Metadata } from 'next';
 
 export async function generateStaticParams() {
   const ids = getAllPoemIds(); // ['poem-1', 'poem-2']
