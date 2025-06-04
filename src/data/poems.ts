@@ -1,7 +1,6 @@
 export interface Poem {
   id: string;
   title: string;
-  author: string;
   content: string;
   backgroundColor?: string;
 }
@@ -11,21 +10,18 @@ export const poems: Poem[] = [
     id: "quiet-fire",
     title: "Quiet Fire",
     content: "i am made of quiet fire.\nburning slow and steady,\nwarming those who come close enough\nto feel my light.",
-    author: "Darshan Regmi",
     backgroundColor: "bg-blush"
   },
   {
     id: "doorway",
     title: "Doorway",
     content: "each verse is a doorway.\nstepping through,\ni find myself in worlds\ni didn't know existed\nuntil i wrote them into being.",
-    author: "Darshan Regmi",
     backgroundColor: "bg-blush"
   },
   {
     id: "fragments",
     title: "Fragments",
     content: "these fragments i've collected—\nmoments of light,\nshards of feeling,\nechoes of memory—\nare the pieces that make me whole.",
-    author: "Darshan Regmi",
     backgroundColor: "bg-blush"
   }
 ];

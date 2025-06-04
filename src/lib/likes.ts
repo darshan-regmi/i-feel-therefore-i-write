@@ -39,13 +39,13 @@ export const getUserLikeStatus = async (poemId: string): Promise<boolean> => {
 // Toggle like
 export const toggleLike = async (poemId: string) => {
   await ensureAuth();
-  
+
   const likesRef = collection(db, LIKES_COLLECTION);
   const userLikeRef = doc(likesRef, `${auth.currentUser?.uid}-${poemId}`);
   const poemRef = doc(db, POEMS_COLLECTION, poemId);
-  
+
   const userLikeDoc = await getDoc(userLikeRef);
-  
+
   // Get or create the poem document
   const poemDoc = await getDoc(poemRef);
   if (!poemDoc.exists()) {

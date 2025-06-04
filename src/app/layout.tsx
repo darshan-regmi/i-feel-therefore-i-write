@@ -13,56 +13,68 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://poetry.darshanregmi.com.np'),
-  manifest: '/manifest.json',
+  metadataBase: new URL("https://poetry.darshanregmi.com.np"),
+  manifest: "/manifest.json",
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon.ico',
-    apple: '/favicon.ico',
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/favicon.ico",
     other: [
       {
-        rel: 'mask-icon',
-        url: '/favicon.ico',
-        color: '#000000'
-      }
-    ]
+        rel: "mask-icon",
+        url: "/favicon.ico",
+        color: "#000000",
+      },
+    ],
   },
   title: {
     default: "i feel, therefore i write",
-    template: "%s | i feel, therefore i write"
+    template: "%s | i feel, therefore i write",
   },
-  description: "A personal collection of poems by Darshan Regmi. For anyone who's ever felt too much, or not enough.",
-  keywords: ["poetry", "poems", "creative writing", "emotions", "feelings", "literature", "Darshan Regmi", "i feel therefore i write"],
+  description:
+    "A personal collection of poems by Darshan Regmi. For anyone who's ever felt too much, or not enough.",
+  keywords: [
+    "poetry",
+    "poems",
+    "creative writing",
+    "emotions",
+    "feelings",
+    "literature",
+    "Darshan Regmi",
+    "i feel therefore i write",
+  ],
   authors: [{ name: "Darshan Regmi", url: "https://darshanregmi.com.np" }],
   creator: "Darshan Regmi",
   openGraph: {
     title: "i feel, therefore i write",
-    description: "A personal collection of poems by Darshan Regmi. For anyone who's ever felt too much, or not enough.",
+    description:
+      "A personal collection of poems by Darshan Regmi. For anyone who's ever felt too much, or not enough.",
     url: "https://poetry.darshanregmi.com.np",
     siteName: "i feel, therefore i write",
     images: [
       {
-        url: '/default-og-image.png',
+        url: "/default-og-image.png",
         width: 1200,
         height: 630,
-        alt: 'i feel, therefore i write - Poetry Collection'
-      }
+        alt: "i feel, therefore i write - Poetry Collection",
+      },
     ],
-    locale: 'en_US',
-    type: 'website'
+    locale: "en_US",
+    type: "website",
   },
   twitter: {
-    card: 'summary_large_image',
+    card: "summary_large_image",
     title: "i feel, therefore i write",
-    description: "A personal collection of poems by Darshan Regmi. For anyone who's ever felt too much, or not enough.",
+    description:
+      "A personal collection of poems by Darshan Regmi. For anyone who's ever felt too much, or not enough.",
     site: "@Regmi6Darshan",
     creator: "@Regmi6Darshan",
-    images: ['/default-og-image.png']
+    images: ["/default-og-image.png"],
   },
   robots: {
     index: true,
-    follow: true
-  }
+    follow: true,
+  },
 };
 
 export default function RootLayout({

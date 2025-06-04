@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { FaHeart, FaRegHeart } from 'react-icons/fa';
-import { getUserLikeStatus, toggleLike, getTotalLikes } from '@/lib/likes';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from "react";
+import { FaHeart, FaRegHeart } from "react-icons/fa";
+import { getUserLikeStatus, toggleLike, getTotalLikes } from "@/lib/likes";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface LikeButtonProps {
   poemId: string;
@@ -15,19 +15,19 @@ export default function LikeButton({ poemId }: LikeButtonProps) {
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
-  const initialize = async () => {
-    try {
-      const status = await getUserLikeStatus(poemId);
-      const likes = await getTotalLikes(poemId);
-      setIsLiked(status);
-      setTotalLikes(likes);
-    } catch (err) {
-      console.error("Error initializing like state:", err);
-    }
-  };
+    const initialize = async () => {
+      try {
+        const status = await getUserLikeStatus(poemId);
+        const likes = await getTotalLikes(poemId);
+        setIsLiked(status);
+        setTotalLikes(likes);
+      } catch (err) {
+        console.error("Error initializing like state:", err);
+      }
+    };
 
-  initialize();
-}, [poemId]);
+    initialize();
+  }, [poemId]);
 
   const handleLike = async () => {
     setIsAnimating(true);
@@ -36,7 +36,7 @@ export default function LikeButton({ poemId }: LikeButtonProps) {
       setIsLiked(newStatus);
       setTotalLikes(newStatus ? totalLikes + 1 : totalLikes - 1);
     } catch (error) {
-      console.error('Error toggling like:', error);
+      console.error("Error toggling like:", error);
     } finally {
       setIsAnimating(false);
     }
@@ -69,7 +69,7 @@ export default function LikeButton({ poemId }: LikeButtonProps) {
       onClick={handleLike}
       disabled={isAnimating}
       className={`flex items-center gap-2 transition duration-200 ${
-        isAnimating ? '': 'hover:scale-105'
+        isAnimating ? "" : "hover:scale-105"
       }`}
     >
       <AnimatePresence mode="wait">
@@ -79,7 +79,7 @@ export default function LikeButton({ poemId }: LikeButtonProps) {
             initial={{ scale: 0.8 }}
             animate={{ scale: 1.2 }}
             exit={{ scale: 0.8 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+            transition={{ type: "spring", stiffness: 300, damping: 15 }}
           >
             <FaHeart className="w-5 h-5 text-red-500" />
           </motion.div>
@@ -89,13 +89,13 @@ export default function LikeButton({ poemId }: LikeButtonProps) {
             initial={{ scale: 0.8 }}
             animate={{ scale: 1 }}
             exit={{ scale: 0.8 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+            transition={{ type: "spring", stiffness: 300, damping: 15 }}
           >
             <FaRegHeart className="w-5 h-5 text-gray-600 hover:text-red-500" />
           </motion.div>
         )}
       </AnimatePresence>
-      <span className={`text-sm ${isLiked ? 'text-red-500' : 'text-gray-600'}`}>
+      <span className={`text-sm ${isLiked ? "text-red-500" : "text-gray-600"}`}>
         {totalLikes}
       </span>
     </button>
