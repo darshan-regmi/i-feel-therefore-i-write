@@ -35,7 +35,7 @@ export default function Home() {
         Start Reading
       </Link>
       <p className="mt-4 text-sm text-gray-500">
-        <Link href="/aboutTheAuthor" className="hover:underline">
+        <Link href="/about-the-author" className="hover:underline">
           About the Author
         </Link>
       </p>

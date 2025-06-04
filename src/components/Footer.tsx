@@ -1,5 +1,5 @@
 import React from "react";
-import { FaInstagram, FaGithub, FaLinkedin, FaTwitter } from "react-icons/fa";
+import { FaGlobe, FaGithub, FaLinkedin, FaTwitter } from "react-icons/fa";
 
 const Footer: React.FC = () => {
   return (
@@ -7,15 +7,15 @@ const Footer: React.FC = () => {
       <p className="mb-2">Connect with me:</p>
       <div className="flex justify-center space-x-6 text-xl text-gray-700">
         <a
-          href="https://instagram.com/wordsbydarshan"
+          href="https://darshanregmi.com.np/"
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-pink-500"
+          className="hover:text-blue-500"
         >
-          <FaInstagram />
+          <FaGlobe />
         </a>
         <a
-          href="https://github.com/yourgithub"
+          href="https://github.com/darshan-regmi"
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-gray-900"
@@ -23,7 +23,7 @@ const Footer: React.FC = () => {
           <FaGithub />
         </a>
         <a
-          href="https://linkedin.com/in/yourlinkedin"
+          href="https://www.linkedin.com/in/darshan-regmi-b08b7823b/"
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-blue-700"
@@ -31,7 +31,7 @@ const Footer: React.FC = () => {
           <FaLinkedin />
         </a>
         <a
-          href="https://twitter.com/yourtwitter"
+          href="https://x.com/Regmi6Darshan"
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-sky-500"
