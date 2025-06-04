@@ -1,0 +1,42 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Allow read access to all documents
+    match /{document=**} {
+      allow read;
+    }
+
+    // Poems collection
+    match /poems/{poemId} {
+      // Allow authenticated users to update only the "likes" field
+      allow update: if request.auth != null &&
+                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']);
+
+      // Allow authenticated users to create poems
+      allow create: if request.auth != null;
+
+      // Allow only the poem owner to delete
+      allow delete: if request.auth != null &&
+                    request.auth.uid == resource.data.userId;
+    }
+
+    // Likes collection (ID format: poemId_userId)
+    match /likes/{likeId} {
+      // Allow create only if:
+      // - user is signed in
+      // - likeId matches poemId_userId
+      // - userId in document matches auth.uid
+      allow create: if request.auth != null &&
+                    likeId == request.resource.data.poemId + "_" + request.auth.uid &&
+                    request.resource.data.userId == request.auth.uid;
+
+      // Allow delete if user owns the like
+      allow delete: if request.auth != null &&
+                    request.auth.uid == resource.data.userId;
+
+      // Prevent updates to like documents
+      allow update: if false;
+    }
+  }
+}

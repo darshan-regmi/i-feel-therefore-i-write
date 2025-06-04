@@ -1,4 +1,19 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+  title: "i feel, therefore i write", 
+  description: "Welcome to 'i feel, therefore i write,' a personal collection of poems by Darshan Regmi. Explore verses born from emotion and experience.",
+  openGraph: {
+    title: "i feel, therefore i write",
+    description: "Welcome to 'i feel, therefore i write,' a personal collection of poems by Darshan Regmi. Explore verses born from emotion and experience.",
+    url: 'https://poetry.darshanregmi.com.np',
+  },
+  twitter: {
+    title: "i feel, therefore i write",
+    description: "Welcome to 'i feel, therefore i write,' a personal collection of poems by Darshan Regmi. Explore verses born from emotion and experience.",
+  }
+};
 
 export default function Home() {
   return (
