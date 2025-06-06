@@ -1,20 +1,22 @@
-import { getPoemById, getAllPoemIds } from "@/data/poems";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { Metadata } from "next";
+import { getPoemById, getAllPoemIds } from '@/lib/notion';
+import { notFound } from "next/navigation"; // Ensure this is imported
 
-export async function generateStaticParams() {
-  const ids = getAllPoemIds(); // e.g., ['poem-1', 'poem-2']
-  return ids.map((id) => ({ id }));
+// Define PoemType here or import it if defined elsewhere
+interface PoemType {
+  id: string;
+  title: string;
+  content: string;
+  // Add other properties of your poem object here
 }
 
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }): Promise<Metadata> {
-  const { id } = await params;
-  const poem = await getPoemById(id);
+  const poem = await getPoemById(params.id);
 
   if (!poem) {
     return {
@@ -29,7 +31,7 @@ export async function generateMetadata({
   const pageUrl = `/poem/${poem.id}`;
 
   return {
-    title: poem.title, // Will be combined with title.template from layout
+    title: poem.title,
     description: pageDescription,
     keywords: [
       poem.title,
@@ -43,37 +45,34 @@ export async function generateMetadata({
       description: pageDescription,
       url: pageUrl,
       type: "article",
-      publishedTime: new Date().toISOString(), // You might want to add a 'datePublished' field to your Poem interface
+      publishedTime: new Date().toISOString(),
       authors: ["Darshan Regmi"],
-      // If you have specific images for poems, you can add them here:
-      // images: [
-      //   {
-      //     url: `/og-images/${poem.id}.png`, // Example: /public/og-images/poem-id.png
-      //     width: 1200,
-      //     height: 630,
-      //     alt: poem.title,
-      //   },
-      // ],
     },
     twitter: {
       card: "summary_large_image",
       title: `${poem.title} | i feel, therefore i write`,
       description: pageDescription,
-      // images: [`/twitter-images/${poem.id}.png`], // Example: /public/twitter-images/poem-id.png
     },
   };
 }
 
-export default async function PoemPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  const poem = await getPoemById(id);
+// Generates static paths for each poem ID
+export async function generateStaticParams() {
+  const ids = await getAllPoemIds(); // Fetches all poem IDs from notion.ts
+  return ids.map((id: string) => ({
+    id: id,
+  }));
+}
 
-  if (!poem) notFound();
+// The page component is now an async function
+export default async function PoemPage({ params }: { params: { id: string } }) {
+  const poem: PoemType | null = await getPoemById(params.id);
 
+  if (!poem) {
+    notFound(); // Triggers a 404 page if the poem is not found
+  }
+
+  // poem is guaranteed to be of PoemType here due to the notFound() call
   return (
     <main className="min-h-screen bg-white text-gray-900 flex flex-col items-center p-8">
       <Link
@@ -87,9 +86,7 @@ export default async function PoemPage({
       <article className="w-full max-w-2xl">
         <h1 className="text-4xl font-serif text-center mb-6">{poem.title}</h1>
         <div
-          className={`p-8 ${
-            poem.backgroundColor ?? "bg-blush"
-          } rounded-2xl shadow-md text-xl font-light leading-relaxed whitespace-pre-line`}
+          className={`p-8 bg-blush rounded-2xl shadow-md text-xl font-light leading-relaxed whitespace-pre-line`}
         >
           {poem.content}
         </div>

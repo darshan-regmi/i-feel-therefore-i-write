@@ -35,14 +35,14 @@ const AboutTheAuthor: React.FC = () => {
             {/* Text */}
             <div className="text-base sm:text-lg text-gray-700 leading-relaxed space-y-4 max-w-xl">
               <p>
-                Hey, I’m <strong>Darshan Regmi</strong>. I write poems to feel,
-                to heal, and to remember. My words come from quiet nights,
+                Hey, I&#39;m <strong>Darshan Regmi</strong>. I write poems to
+                feel, to heal, and to remember. My words come from quiet nights,
                 soft love, and memories that never quite leave.
               </p>
 
               <p>
-                I’m working on my first book, <em>“Our Story”</em> — a journey
-                through love, loss, and becoming whole again.
+                I&#39;m working on my first book, <em>“Our Story”</em> — a
+                journey through love, loss, and becoming whole again.
               </p>
 
               <p>

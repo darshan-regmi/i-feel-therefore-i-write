@@ -1,26 +1,29 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { poems } from "@/data/poems";
-import LikeButton from "@/components/LikeButton";
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import { getPoemsFromNotion } from '@/lib/notion'
+import PoemsClient from '@/components/PoemClient'  // <— client wrapper
+
 
 export const metadata: Metadata = {
-  title: "my poems",
+  title: 'my poems',
   description:
-    "Browse a collection of poems by Darshan Regmi. Discover verses on emotion, experience, and reflection.",
+    'Browse a collection of poems by Darshan Regmi. Discover verses on emotion, experience, and reflection.',
   openGraph: {
-    title: "All Poems | i feel, therefore i write",
+    title: 'All Poems | i feel, therefore i write',
     description:
-      "Browse a collection of poems by Darshan Regmi. Discover verses on emotion, experience, and reflection.",
-    url: "https://poetry.darshanregmi.com.np/poem",
+      'Browse a collection of poems by Darshan Regmi. Discover verses on emotion, experience, and reflection.',
+    url: 'https://poetry.darshanregmi.com.np/poem',
   },
   twitter: {
-    title: "All Poems | i feel, therefore i write",
+    title: 'All Poems | i feel, therefore i write',
     description:
-      "Browse a collection of poems by Darshan Regmi. Discover verses on emotion, experience, and reflection.",
+      'Browse a collection of poems by Darshan Regmi. Discover verses on emotion, experience, and reflection.',
   },
-};
+}
 
-export default function PoemsPage() {
+export default async function PoemsPage() {
+  const poems = await getPoemsFromNotion()
+
   return (
     <main className="min-h-screen bg-white text-gray-900 flex flex-col items-center p-8">
       <Link
@@ -30,40 +33,14 @@ export default function PoemsPage() {
       >
         ← back to home
       </Link>
+
       <h1 className="text-4xl font-serif text-center mb-2">my poems</h1>
       <p className="text-gray-600 text-center max-w-xl mb-8">
         bits of emotion I&#39;ve carried, now passed gently to you.
       </p>
 
-      <ul className="w-full max-w-2xl space-y-4">
-        {poems.map((poem) => (
-          <li key={poem.id}>
-            <div
-              className={`p-6 ${
-                poem.backgroundColor ?? "bg-blush"
-              } rounded-2xl shadow text-lg font-light leading-relaxed cursor-pointer hover:shadow-md transition-shadow`}
-            >
-              <Link href={`/poem/${poem.id}`}>
-                <div>
-                  <h2 className="text-xl mb-2 font-medium">{poem.title}</h2>
-                  <p>&ldquo;{poem.content.split("\n")[0]}&rdquo;</p>
-                  <br />
-                </div>
-              </Link>
-              <div
-                className=""
-                style={{
-                  display: "flex",
-                  justifyContent: "left",
-                  alignItems: "center",
-                }}
-              >
-                <LikeButton poemId={poem.id} />
-              </div>
-            </div>
-          </li>
-        ))}
-      </ul>
+      {/* 👇 all interactive stuff lives here */}
+      <PoemsClient poems={poems} />
     </main>
-  );
+  )
 }

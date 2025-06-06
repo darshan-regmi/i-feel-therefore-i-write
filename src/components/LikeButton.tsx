@@ -13,37 +13,9 @@ export default function LikeButton({ poemId }: LikeButtonProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [totalLikes, setTotalLikes] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
-
-  useEffect(() => {
-    const initialize = async () => {
-      try {
-        const status = await getUserLikeStatus(poemId);
-        const likes = await getTotalLikes(poemId);
-        setIsLiked(status);
-        setTotalLikes(likes);
-      } catch (err) {
-        console.error("Error initializing like state:", err);
-      }
-    };
-
-    initialize();
-  }, [poemId]);
-
-  const handleLike = async () => {
-    setIsAnimating(true);
-    try {
-      const newStatus = await toggleLike(poemId);
-      setIsLiked(newStatus);
-      setTotalLikes(newStatus ? totalLikes + 1 : totalLikes - 1);
-    } catch (error) {
-      console.error("Error toggling like:", error);
-    } finally {
-      setIsAnimating(false);
-    }
-  };
-
   const [loading, setLoading] = useState(true);
 
+  // Fetch initial like status and total likes on mount or when poemId changes
   useEffect(() => {
     const initialize = async () => {
       setLoading(true);
@@ -62,15 +34,58 @@ export default function LikeButton({ poemId }: LikeButtonProps) {
     initialize();
   }, [poemId]);
 
-  if (loading) return null; // or a small spinner
+  // Optimistic UI update on like toggle
+  const handleLike = async () => {
+    if (isAnimating) return; // Prevent spamming clicks
+    setIsAnimating(true);
+
+    // Optimistic update — immediately reflect the new state in UI
+    const optimisticLiked = !isLiked;
+    const optimisticLikes = optimisticLiked ? totalLikes + 1 : totalLikes - 1;
+
+    setIsLiked(optimisticLiked);
+    setTotalLikes(optimisticLikes);
+
+    try {
+      const newStatus = await toggleLike(poemId);
+
+      // Sync with server result (in case of mismatch)
+      setIsLiked(newStatus);
+      // Optionally re-fetch likes count for absolute accuracy
+      // const updatedLikes = await getTotalLikes(poemId);
+      // setTotalLikes(updatedLikes);
+    } catch (error) {
+      console.error("Error toggling like:", error);
+      // Revert optimistic update on failure
+      setIsLiked(isLiked);
+      setTotalLikes(totalLikes);
+    } finally {
+      setIsAnimating(false);
+    }
+  };
+
+  // While loading, show disabled button with placeholder UI (not blank)
+  if (loading)
+    return (
+      <button
+        disabled
+        className="flex items-center gap-2 opacity-50 cursor-not-allowed select-none"
+        aria-label="Loading likes"
+      >
+        <FaRegHeart className="w-5 h-5 text-gray-400 animate-pulse" />
+        <span className="text-sm text-gray-400">—</span>
+      </button>
+    );
 
   return (
     <button
       onClick={handleLike}
       disabled={isAnimating}
       className={`flex items-center gap-2 transition duration-200 ${
-        isAnimating ? "" : "hover:scale-105"
+        isAnimating ? "opacity-70 cursor-wait" : "hover:scale-105"
       }`}
+      aria-pressed={isLiked}
+      aria-label={isLiked ? "Unlike poem" : "Like poem"}
     >
       <AnimatePresence mode="wait">
         {isLiked ? (
