@@ -1,5 +1,9 @@
 // src/lib/notion.ts
 import { Client } from '@notionhq/client'
+import {
+  PageObjectResponse,
+  QueryDatabaseResponse,
+} from '@notionhq/client/build/src/api-endpoints';
 
 const notion = new Client({
   auth:"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", // Consider moving to environment variables
@@ -7,44 +11,93 @@ const notion = new Client({
 
 const databaseId = "209419347bda80089684fc2ae3e15149"! // Consider moving to environment variables
 
+async function queryDatabase(
+  params: Omit<Parameters<typeof notion.databases.query>[0], 'database_id'>
+) {
+  let results: PageObjectResponse[] = [];
+  let cursor: string | undefined = undefined;
+
+  do {
+    const response = (await notion.databases.query({
+      database_id: databaseId,
+      start_cursor: cursor,
+      ...params,
+    })) as QueryDatabaseResponse;
+
+    results = results.concat(response.results as PageObjectResponse[]);
+    cursor = response.has_more ? response.next_cursor ?? undefined : undefined;
+  } while (cursor);
+
+  return results;
+}
+
+/**
+ * Fetch all published poems. Sorted in descending order by the “Content” property (adjust if needed).
+ */
 export async function getPoemsFromNotion() {
-  const response = await notion.databases.query({
-    database_id: databaseId,
+  const pages = await queryDatabase({
+    filter: {
+      property: 'Status',
+      status: {
+        equals: 'Published',
+      },
+    },
     sorts: [
       {
-        property: 'Content', // Assuming this is a date property for sorting, adjust if it's the text content itself
+        property: 'Content',
         direction: 'descending',
       },
     ],
-  })
+  });
 
-  return response.results.map((page: any) => ({
-    id: page.id,
-    title: page.properties.Title?.title[0]?.plain_text || 'Untitled',
-    content:
-      page.properties.Content?.rich_text[0]?.plain_text || '(No content)',
-  }))
+  return pages.map((page) => {
+    const title =
+      page.properties.Title?.type === 'title' && page.properties.Title.title[0]
+        ? page.properties.Title.title[0].plain_text
+        : 'Untitled';
+
+    const content =
+      page.properties.Content?.type === 'rich_text' &&
+      page.properties.Content.rich_text[0]
+        ? page.properties.Content.rich_text[0].plain_text
+        : '(No content)';
+
+    return {
+      id: page.id,
+      title,
+      content,
+    };
+  });
 }
 
+/**
+ * Retrieve a single poem by page ID.
+ */
 export async function getPoemById(id: string) {
-  const page = await notion.pages.retrieve({ page_id: id }) as any;
-  // Basic error handling if page is not found or doesn't have expected structure
-  if (!page || !page.properties || !page.properties.Title || !page.properties.Content) {
-    console.error(`Poem with ID ${id} not found or has unexpected structure.`);
-    return null; // Or throw an error, depending on how you want to handle this
-  }
+  const page = (await notion.pages.retrieve({ page_id: id })) as PageObjectResponse;
+
+  const title =
+    page.properties.Title?.type === 'title' && page.properties.Title.title[0]
+      ? page.properties.Title.title[0].plain_text
+      : 'Untitled';
+
+  const content =
+    page.properties.Content?.type === 'rich_text' && page.properties.Content.rich_text[0]
+      ? page.properties.Content.rich_text[0].plain_text
+      : '(No content)';
+
   return {
     id: page.id,
-    title: page.properties.Title?.title[0]?.plain_text || 'Untitled',
-    content:
-      page.properties.Content?.rich_text[0]?.plain_text || '(No content)',
+    title,
+    content,
   };
 }
 
-// New function to get all poem IDs
+/**
+ * Return IDs for all published poems — useful for dynamic route generation (e.g., getStaticPaths).
+ */
 export async function getAllPoemIds(): Promise<string[]> {
-  const response = await notion.databases.query({
-    database_id: databaseId,
+  const pages = await queryDatabase({
     filter: {
       property: 'Status',
       status: {
@@ -53,5 +106,5 @@ export async function getAllPoemIds(): Promise<string[]> {
     },
   });
 
-  return response.results.map((page: any) => page.id);
+  return pages.map((page) => page.id);
 }
