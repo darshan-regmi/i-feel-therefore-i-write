@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Head from "next/head";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -86,31 +85,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <Head>
-        <meta property="og:title" content="i feel, therefore i write" />
-        <meta
-          property="og:description"
-          content="A personal collection of poems by Darshan Regmi..."
-        />
-        <meta
-          property="og:image"
-          content="https://poetry.darshanregmi.com.np/default-og-image.png"
-        />
-        <meta property="og:url" content="https://poetry.darshanregmi.com.np" />
-        <meta property="og:type" content="website" />
-
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="i feel, therefore i write" />
-        <meta
-          name="twitter:description"
-          content="A personal collection of poems by Darshan Regmi..."
-        />
-        <meta
-          name="twitter:image"
-          content="https://poetry.darshanregmi.com.np/default-og-image.png"
-        />
-        <meta name="twitter:creator" content="@Regmi6Darshan" />
-      </Head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
