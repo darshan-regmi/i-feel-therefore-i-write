@@ -58,10 +58,10 @@ export const metadata: Metadata = {
     siteName: "i feel, therefore i write",
     images: [
       {
-        url: "/default-og-image.png",
+        url: "https://poetry.darshanregmi.com.np/default-og-image.png",
         width: 1200,
         height: 630,
-        alt: "i feel, therefore i write - Poetry Collection",
+        alt: "i feel, therefore i write",
       },
     ],
     locale: "en_US",
