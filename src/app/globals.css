@@ -1,47 +1,26 @@
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+@import "tailwindcss";
 
-/* Root Variables (Light Mode Defaults) */
 :root {
-  --color-background: #ffffff;
-  --color-foreground: #171717;
-
-  --font-sans: 'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'Geist Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+  --background: #ffffff;
+  --foreground: #171717;
 }
 
-/* Dark Mode Overrides */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-background: #0a0a0a;
-    --color-foreground: #ededed;
+    --background: #0a0a0a;
+    --foreground: #ededed;
   }
 }
 
-/* Base Styles */
 body {
-  margin: 0;
-  padding: 0;
-  background-color: var(--color-background);
-  color: var(--color-foreground);
-  font-family: var(--font-sans);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Utility Classes (Optional Enhancements) */
-a {
-  text-decoration: none;
-  color: inherit;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-::selection {
-  background-color: #ffffff; /* blush pink */
-  color: #000;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
 }
