@@ -30,7 +30,7 @@ export default function Home() {
 
       <Link
         href="/poem"
-        className="mt-8 px-6 py-2 bg-black text-white font-medium rounded-full hover:bg-gray-800 transition"
+        className="mt-8 px-6 py-2 bg-white text-white font-medium rounded-full hover:bg-gray-800 transition"
       >
         Start Reading
       </Link>

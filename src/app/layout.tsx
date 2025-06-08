@@ -14,19 +14,6 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://poetry.darshanregmi.com.np"),
-  manifest: "/manifest.json",
-  icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
-    apple: "/favicon.ico",
-    other: [
-      {
-        rel: "mask-icon",
-        url: "/favicon.ico",
-        color: "#000000",
-      },
-    ],
-  },
   title: {
     default: "i feel, therefore i write",
     template: "%s | i feel, therefore i write",
@@ -42,9 +29,27 @@ export const metadata: Metadata = {
     "literature",
     "Darshan Regmi",
     "i feel therefore i write",
+    "poet"
   ],
   authors: [{ name: "Darshan Regmi", url: "https://darshanregmi.com.np" }],
   creator: "Darshan Regmi",
+  robots: {
+    index: true,
+    follow: true,
+  },
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/favicon.ico",
+    other: [
+      {
+        rel: "mask-icon",
+        url: "/favicon.ico",
+        color: "#000000",
+      },
+    ],
+  },
   openGraph: {
     title: "i feel, therefore i write",
     description:
@@ -53,7 +58,7 @@ export const metadata: Metadata = {
     siteName: "i feel, therefore i write",
     images: [
       {
-        url: "/default-og-image.png",
+        url: "https://poetry.darshanregmi.com.np/default-og-image.png",
         width: 1200,
         height: 630,
         alt: "i feel, therefore i write - Poetry Collection",
@@ -69,19 +74,15 @@ export const metadata: Metadata = {
       "A personal collection of poems by Darshan Regmi. For anyone who's ever felt too much, or not enough.",
     site: "@Regmi6Darshan",
     creator: "@Regmi6Darshan",
-    images: ["/default-og-image.png"],
-  },
-  robots: {
-    index: true,
-    follow: true,
+    images: ["https://poetry.darshanregmi.com.np/default-og-image.png"],
   },
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
       <body
