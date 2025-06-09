@@ -1,6 +1,6 @@
 {
-  "name": "i feel, therefore i write",
-  "short_name": "PoetryApp",
+  "name": "MyWebSite",
+  "short_name": "MySite",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",

@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://poetry.darshanregmi.com.np"),
   title: {
-    default: "i feel, therefore i write",
+    default: "i feel, therefore i write - Poetry Collection",
     template: "%s | i feel, therefore i write",
   },
   description:
