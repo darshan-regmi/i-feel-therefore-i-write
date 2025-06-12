@@ -1,3 +1,5 @@
+export const revalidate = 60;
+
 import Link from "next/link";
 import { Metadata } from "next";
 import { getPoemById, getAllPoemIds } from '@/lib/notion';
