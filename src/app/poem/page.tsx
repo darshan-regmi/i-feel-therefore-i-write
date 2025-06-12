@@ -1,14 +1,10 @@
-export const revalidate = 60; // Regenerate every 60s
-export const runtime = 'nodejs'; // Use Node instead of Edge
+export const revalidate = 60;
+export const runtime = 'nodejs';
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getPoemsFromNotion } from '@/lib/notion'
-import dynamic from 'next/dynamic'
-
-const PoemsClient = dynamic(() => import('@/components/PoemClient'), {
-  ssr: false,
-})
+import PoemsWrapper from '@/components/PoemsWrapper' // 👈 new wrapper!
 
 export const metadata: Metadata = {
   title: 'my poems',
@@ -45,8 +41,8 @@ export default async function PoemsPage() {
         bits of emotion I&#39;ve carried, now passed gently to you.
       </p>
 
-      {/* 👇 all interactive stuff lives here */}
-      <PoemsClient poems={poems} />
+      {/* ✅ Render the wrapper instead */}
+      <PoemsWrapper poems={poems} />
     </main>
   )
 }
