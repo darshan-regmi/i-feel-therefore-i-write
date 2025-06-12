@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { Metadata } from "next";
-import { getPoemById, getAllPoemIds } from "@/lib/notion";
+import { getPoemById } from "@/lib/notion";
 import { notFound } from "next/navigation"; // Ensure this is imported
 import ReactMarkdown from "react-markdown";
 
