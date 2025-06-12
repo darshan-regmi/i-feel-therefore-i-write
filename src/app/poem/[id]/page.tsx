@@ -1,11 +1,10 @@
-export const runtime = 'edge';
+'use client';
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { Metadata } from "next";
 import { getPoemById } from "@/lib/notion";
-import { notFound } from "next/navigation"; // Ensure this is imported
-import ReactMarkdown from "react-markdown";
+import { notFound } from "next/navigation";
 
 // Define PoemType here or import it if defined elsewhere
 interface PoemType {
@@ -84,9 +83,7 @@ export default async function PoemPage({ params }: { params: { id: string } }) {
         <div
           className={`p-8 bg-blush rounded-2xl shadow-md text-xl font-light leading-relaxed whitespace-pre-line`}
         >
-          <ReactMarkdown>
-            {poem.content}
-          </ReactMarkdown>
+          {poem.content}
         </div>
       </article>
     </main>
