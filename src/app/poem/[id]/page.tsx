@@ -2,8 +2,9 @@ export const revalidate = 60;
 
 import Link from "next/link";
 import { Metadata } from "next";
-import { getPoemById, getAllPoemIds } from '@/lib/notion';
+import { getPoemById, getAllPoemIds } from "@/lib/notion";
 import { notFound } from "next/navigation"; // Ensure this is imported
+import ReactMarkdown from "react-markdown";
 
 // Define PoemType here or import it if defined elsewhere
 interface PoemType {
@@ -30,8 +31,7 @@ export async function generateMetadata({
   const pageDescription =
     poem.content.substring(0, 160).replace(/\n/g, " ").trim() +
     (poem.content.length > 160 ? "..." : "");
-  const pageUrl = `/poem/${poem.id}`;
-
+  const pageUrl = `https://poetry.darshanregmi.com.np/poem/${poem.id}`;
   return {
     title: poem.title,
     description: pageDescription,
@@ -90,7 +90,9 @@ export default async function PoemPage({ params }: { params: { id: string } }) {
         <div
           className={`p-8 bg-blush rounded-2xl shadow-md text-xl font-light leading-relaxed whitespace-pre-line`}
         >
-          {poem.content}
+          <ReactMarkdown>
+            {poem.content}
+          </ReactMarkdown>
         </div>
       </article>
     </main>
