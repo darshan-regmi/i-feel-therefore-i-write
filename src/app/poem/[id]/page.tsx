@@ -59,13 +59,6 @@ export async function generateMetadata({
   };
 }
 
-// Generates static paths for each poem ID
-export async function generateStaticParams() {
-  const ids = await getAllPoemIds(); // Fetches all poem IDs from notion.ts
-  return ids.map((id: string) => ({
-    id: id,
-  }));
-}
 
 // The page component is now an async function
 export default async function PoemPage({ params }: { params: { id: string } }) {
