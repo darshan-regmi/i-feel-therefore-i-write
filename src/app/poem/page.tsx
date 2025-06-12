@@ -1,11 +1,14 @@
-export const dynamic = 'force-dynamic';
-export const runtime = 'edge';
+export const revalidate = 60; // Regenerate every 60s
+export const runtime = 'nodejs'; // Use Node instead of Edge
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getPoemsFromNotion } from '@/lib/notion'
-import PoemsClient from '@/components/PoemClient'
+import dynamic from 'next/dynamic'
 
+const PoemsClient = dynamic(() => import('@/components/PoemClient'), {
+  ssr: false,
+})
 
 export const metadata: Metadata = {
   title: 'my poems',
