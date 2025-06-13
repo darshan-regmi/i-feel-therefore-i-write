@@ -1,4 +1,4 @@
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 export const runtime = 'edge';
 
 import Link from "next/link";

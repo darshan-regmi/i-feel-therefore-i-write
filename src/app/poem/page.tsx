@@ -1,10 +1,10 @@
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getPoemsFromNotion } from '@/lib/notion'
-import PoemsWrapper from '@/components/PoemsWrapper' // 👈 new wrapper!
+import PoemsWrapper from '@/components/PoemsWrapper'
 
 export const metadata: Metadata = {
   title: 'my poems',
