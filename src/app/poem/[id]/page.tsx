@@ -1,17 +1,15 @@
-export const dynamic = "force-dynamic";
-export const runtime = 'edge';
+export const revalidate = 60;
 
 import Link from "next/link";
 import { Metadata } from "next";
 import { getPoemById } from "@/lib/notion";
 import { notFound } from "next/navigation";
+import PoemContent from "@/components/PoemComponent";
 
-// Define PoemType here or import it if defined elsewhere
 interface PoemType {
   id: string;
   title: string;
   content: string;
-  // Add other properties of your poem object here
 }
 
 export async function generateMetadata({
@@ -32,6 +30,7 @@ export async function generateMetadata({
     poem.content.substring(0, 160).replace(/\n/g, " ").trim() +
     (poem.content.length > 160 ? "..." : "");
   const pageUrl = `https://poetry.darshanregmi.com.np/poem/${poem.id}`;
+
   return {
     title: poem.title,
     description: pageDescription,
@@ -58,16 +57,17 @@ export async function generateMetadata({
   };
 }
 
-
-// The page component is now an async function
-export default async function PoemPage({ params }: { params: { id: string } }) {
+export default async function PoemPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const poem: PoemType | null = await getPoemById(params.id);
 
   if (!poem) {
-    notFound(); // Triggers a 404 page if the poem is not found
+    notFound();
   }
 
-  // poem is guaranteed to be of PoemType here due to the notFound() call
   return (
     <main className="min-h-screen bg-white text-gray-900 flex flex-col items-center p-8">
       <Link
@@ -78,11 +78,11 @@ export default async function PoemPage({ params }: { params: { id: string } }) {
         ← back to poems
       </Link>
 
+      <PoemContent id={params.id} />
+
       <article className="w-full max-w-2xl">
         <h1 className="text-4xl font-serif text-center mb-6">{poem.title}</h1>
-        <div
-          className={`p-8 bg-blush rounded-2xl shadow-md text-xl font-light leading-relaxed whitespace-pre-line`}
-        >
+        <div className="p-8 bg-blush rounded-2xl shadow-md text-xl font-light leading-relaxed whitespace-pre-line">
           {poem.content}
         </div>
       </article>
