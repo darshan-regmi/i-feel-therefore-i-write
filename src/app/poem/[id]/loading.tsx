@@ -2,24 +2,30 @@
 
 export default function Loading() {
   return (
-    <main className="min-h-screen bg-white text-gray-900 flex flex-col items-center p-8">
-      <div className="w-full max-w-2xl p-8 bg-gradient-to-br from-rose-100 via-pink-50 to-amber-50 rounded-2xl shadow-lg animate-pulse border border-rose-200">
+    <main className="min-h-screen bg-white text-black flex flex-col items-center justify-center px-6 py-12">
+      <div className="w-full max-w-2xl p-8 rounded-xl shadow-sm border border-gray-200 animate-pulse bg-white">
+        
         {/* Title Skeleton */}
-        <div className="h-10 w-3/4 bg-rose-200/60 rounded mb-6"></div>
+        <div className="h-10 w-3/4 bg-gray-200 rounded mb-6"></div>
 
-        {/* Content Skeleton */}
+        {/* Poem Skeleton Lines */}
         <div className="space-y-4">
-          <div className="h-5 w-full bg-rose-100/60 rounded"></div>
-          <div className="h-5 w-5/6 bg-rose-100/60 rounded"></div>
-          <div className="h-5 w-2/3 bg-rose-100/60 rounded"></div>
-          <div className="h-5 w-3/4 bg-rose-100/60 rounded"></div>
-          <div className="h-5 w-full bg-rose-100/60 rounded"></div>
-          <div className="h-5 w-4/6 bg-rose-100/60 rounded"></div>
+          <div className="h-5 w-full bg-gray-100 rounded"></div>
+          <div className="h-5 w-5/6 bg-gray-100 rounded"></div>
+          <div className="h-5 w-2/3 bg-gray-100 rounded"></div>
+          <div className="h-5 w-3/4 bg-gray-100 rounded"></div>
+          <div className="h-5 w-full bg-gray-100 rounded"></div>
+          <div className="h-5 w-4/6 bg-gray-100 rounded"></div>
         </div>
 
         {/* Signature Line Skeleton */}
-        <div className="mt-10 h-4 w-32 bg-rose-200/50 rounded-full mx-auto"></div>
+        <div className="mt-10 h-4 w-28 bg-gray-300 rounded-full mx-auto"></div>
       </div>
+
+      {/* Poetic Loading Hint */}
+      <p className="mt-8 text-sm italic text-gray-500 animate-pulse delay-1000">
+        a verse is unfolding...
+      </p>
     </main>
   );
 }

@@ -2,41 +2,49 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Allow read access to all documents
-    match /{document=**} {
-      allow read;
-    }
-
-    // Poems collection
+    // --- Public Read Access (Optional: Make this collection-specific if needed later) ---
     match /poems/{poemId} {
-      // Allow authenticated users to update only the "likes" field
+      // Anyone can read poems
+      allow read: if true;
+
+      // Only authenticated users can create poems and only for themselves
+      allow create: if request.auth != null &&
+                    request.resource.data.userId == request.auth.uid;
+
+      // Only allow updating the "likes" field by any signed-in user
       allow update: if request.auth != null &&
                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']);
 
-      // Allow authenticated users to create poems
-      allow create: if request.auth != null;
-
-      // Allow only the poem owner to delete
+      // Only allow the poem owner to delete their poem
       allow delete: if request.auth != null &&
                     request.auth.uid == resource.data.userId;
     }
 
-    // Likes collection (ID format: poemId_userId)
+    // --- Likes Collection ---
     match /likes/{likeId} {
-      // Allow create only if:
-      // - user is signed in
-      // - likeId matches poemId_userId
-      // - userId in document matches auth.uid
+      // Allow read to everyone (if needed, otherwise remove this)
+      allow read: if true;
+
+      // Only allow the user to create a like doc for themselves, with strict ID format
       allow create: if request.auth != null &&
                     likeId == request.resource.data.poemId + "_" + request.auth.uid &&
                     request.resource.data.userId == request.auth.uid;
 
-      // Allow delete if user owns the like
+      // Only allow the owner of the like to delete it
       allow delete: if request.auth != null &&
                     request.auth.uid == resource.data.userId;
 
-      // Prevent updates to like documents
+      // Disallow updates entirely
       allow update: if false;
+    }
+
+    // --- [Optional] Comments or Other Collections ---
+    // match /comments/{commentId} { ... }
+
+    // --- Catch-all: Deny everything else by default ---
+    match /{document=**} {
+      allow read: if false;
+      allow write: if false;
     }
   }
 }

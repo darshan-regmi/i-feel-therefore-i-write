@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Metadata } from "next";
 import { getPoemById } from "@/lib/notion";
 import { notFound } from "next/navigation";
-import PoemContent from "@/components/PoemComponent";
 
 interface PoemType {
   id: string;
@@ -78,8 +77,6 @@ export default async function PoemPage({
       >
         ← back to poems
       </Link>
-
-      <PoemContent id={params.id} />
 
       <article className="w-full max-w-2xl">
         <h1 className="text-4xl font-serif text-center mb-6">{poem.title}</h1>

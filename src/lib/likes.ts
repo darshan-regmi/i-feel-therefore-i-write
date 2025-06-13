@@ -1,21 +1,38 @@
 import { auth, db } from './firebase';
 import { signInAnonymously } from 'firebase/auth';
-import { collection, doc, getDoc, setDoc, updateDoc, increment, deleteDoc } from 'firebase/firestore';
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  increment,
+  deleteDoc,
+} from 'firebase/firestore';
 
 const LIKES_COLLECTION = 'likes';
 const POEMS_COLLECTION = 'poems';
 
-// Ensure anonymous sign-in
-export const ensureAuth = async (): Promise<void> => {
+let isAuthResolved = false;
+
+/**
+ * Ensures the user is signed in anonymously before making Firestore calls.
+ */
+export const ensureAuth = async (): Promise<string> => {
+  if (isAuthResolved && auth.currentUser?.uid) {
+    return auth.currentUser.uid;
+  }
+
   return new Promise((resolve, reject) => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        resolve();
+      if (user?.uid) {
+        isAuthResolved = true;
+        resolve(user.uid);
         unsubscribe();
       } else {
         try {
-          await signInAnonymously(auth);
-          resolve();
+          const result = await signInAnonymously(auth);
+          isAuthResolved = true;
+          resolve(result.user.uid);
           unsubscribe();
         } catch (error) {
           reject(error);
@@ -25,53 +42,76 @@ export const ensureAuth = async (): Promise<void> => {
   });
 };
 
-// Get if user has liked the poem
+/**
+ * Checks if the current user has liked a specific poem.
+ */
 export const getUserLikeStatus = async (poemId: string): Promise<boolean> => {
-  await ensureAuth(); // now waits until auth.currentUser is ready
-  const uid = auth.currentUser?.uid;
-  if (!uid) return false;
-
-  const userLikeRef = doc(db, 'likes', `${uid}-${poemId}`);
-  const userLikeDoc = await getDoc(userLikeRef);
-  return userLikeDoc.exists();
-};
-
-// Toggle like
-export const toggleLike = async (poemId: string) => {
-  await ensureAuth();
-
-  const likesRef = collection(db, LIKES_COLLECTION);
-  const userLikeRef = doc(likesRef, `${auth.currentUser?.uid}-${poemId}`);
-  const poemRef = doc(db, POEMS_COLLECTION, poemId);
-
-  const userLikeDoc = await getDoc(userLikeRef);
-
-  // Get or create the poem document
-  const poemDoc = await getDoc(poemRef);
-  if (!poemDoc.exists()) {
-    await setDoc(poemRef, { likes: 0 }); // initializes if not present
-  }
-
-  if (userLikeDoc.exists()) {
-    // Remove like
-    await updateDoc(poemRef, { likes: increment(-1) });
-    await deleteDoc(userLikeDoc.ref);
+  try {
+    const uid = await ensureAuth();
+    const userLikeRef = doc(db, LIKES_COLLECTION, `${uid}-${poemId}`);
+    const userLikeDoc = await getDoc(userLikeRef);
+    return userLikeDoc.exists();
+  } catch (error) {
+    console.error('Error checking like status:', error);
     return false;
-  } else {
-    // Add like
-    await updateDoc(poemRef, { likes: increment(1) });
-    await setDoc(userLikeRef, {
-      userId: auth.currentUser?.uid,
-      poemId,
-      timestamp: new Date()
-    });
-    return true;
   }
 };
 
-// Get like count
-export const getTotalLikes = async (poemId: string) => {
-  const poemRef = doc(db, POEMS_COLLECTION, poemId);
-  const poemDoc = await getDoc(poemRef);
-  return poemDoc.data()?.likes || 0;
+/**
+ * Toggles a like on a poem for the current user.
+ * Returns `true` if liked, `false` if unliked.
+ */
+export const toggleLike = async (poemId: string): Promise<boolean> => {
+  try {
+    const uid = await ensureAuth();
+    const userLikeRef = doc(db, LIKES_COLLECTION, `${uid}-${poemId}`);
+    const poemRef = doc(db, POEMS_COLLECTION, poemId);
+
+    const [userLikeDoc, poemDoc] = await Promise.all([
+      getDoc(userLikeRef),
+      getDoc(poemRef),
+    ]);
+
+    // Ensure poem doc exists
+    if (!poemDoc.exists()) {
+      await setDoc(poemRef, { likes: 0 }, { merge: true });
+    }
+
+    if (userLikeDoc.exists()) {
+      // Remove like
+      await Promise.all([
+        updateDoc(poemRef, { likes: increment(-1) }),
+        deleteDoc(userLikeRef),
+      ]);
+      return false;
+    } else {
+      // Add like
+      await Promise.all([
+        updateDoc(poemRef, { likes: increment(1) }),
+        setDoc(userLikeRef, {
+          userId: uid,
+          poemId,
+          timestamp: new Date(),
+        }),
+      ]);
+      return true;
+    }
+  } catch (error) {
+    console.error('Error toggling like:', error);
+    return false;
+  }
+};
+
+/**
+ * Fetches the total number of likes for a given poem.
+ */
+export const getTotalLikes = async (poemId: string): Promise<number> => {
+  try {
+    const poemRef = doc(db, POEMS_COLLECTION, poemId);
+    const poemDoc = await getDoc(poemRef);
+    return poemDoc.data()?.likes || 0;
+  } catch (error) {
+    console.error('Error fetching total likes:', error);
+    return 0;
+  }
 };
