@@ -1,4 +1,5 @@
 export const revalidate = 60;
+export const runtime = 'edge';
 
 import Link from "next/link";
 import { Metadata } from "next";
