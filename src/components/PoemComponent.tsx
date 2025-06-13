@@ -62,11 +62,6 @@ export default function PoemContent({ id }: PoemContentProps) {
   }
 
   return (
-    <article className="w-full max-w-2xl">
-      <h1 className="text-4xl font-serif text-center mb-6">{poem.title}</h1>
-      <div className="p-8 bg-blush rounded-2xl shadow-md text-xl font-light leading-relaxed whitespace-pre-line">
-        {poem.content}
-      </div>
-    </article>
+    <br />
   );
 }
