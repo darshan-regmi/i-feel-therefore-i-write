@@ -1,9 +1,8 @@
-export const dynamic = 'force-dynamic';
+export const revalidate = 60
 export const runtime = 'edge';
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { getPoemsFromNotion } from '@/lib/notion'
 import PoemsWrapper from '@/components/PoemsWrapper'
 
 export const metadata: Metadata = {
@@ -24,13 +23,18 @@ export const metadata: Metadata = {
 }
 
 export default async function PoemsPage() {
-  const poems = await getPoemsFromNotion()
+  try{
+  const res = await fetch('https://poetry.darshanregmi.com.np/api/poem', {
+    next: { revalidate: 60 },
+  })
+
+  const poems = await res.json()
 
   return (
     <main className="min-h-screen bg-white text-gray-900 flex flex-col items-center p-8">
       <Link
         href="/"
-        aria-label="Back to poems"
+        aria-label="Back to home"
         className="self-start mb-8 text-gray-500 hover:text-gray-800 transition-colors"
       >
         ← back to home
@@ -41,8 +45,10 @@ export default async function PoemsPage() {
         bits of emotion I&#39;ve carried, now passed gently to you.
       </p>
 
-      {/* ✅ Render the wrapper instead */}
       <PoemsWrapper poems={poems} />
     </main>
   )
+} catch (error) {
+  console.error(error)
+}
 }

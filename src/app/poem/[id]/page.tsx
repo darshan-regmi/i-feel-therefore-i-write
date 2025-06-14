@@ -72,6 +72,7 @@ export default async function PoemPage({
     <main className="min-h-screen bg-white text-gray-900 flex flex-col items-center p-8">
       <Link
         href="/poem"
+        scroll={false}
         aria-label="Back to poems"
         className="self-start mb-8 text-gray-500 hover:text-gray-800 transition-colors"
       >

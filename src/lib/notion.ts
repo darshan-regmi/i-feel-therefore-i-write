@@ -6,10 +6,10 @@ import {
 } from '@notionhq/client/build/src/api-endpoints';
 
 const notion = new Client({
-  auth:"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", // Consider moving to environment variables
+  auth:"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",
 })
 
-const databaseId = "209419347bda80089684fc2ae3e15149"! // Consider moving to environment variables
+const databaseId = "209419347bda80089684fc2ae3e15149"!
 
 async function queryDatabase(
   params: Omit<Parameters<typeof notion.databases.query>[0], 'database_id'>
