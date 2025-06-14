@@ -1,10 +1,11 @@
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 export const runtime = 'edge';
 
-import Link from "next/link";
 import { Metadata } from "next";
 import { getPoemById } from "@/lib/notion";
 import { notFound } from "next/navigation";
+import BackButtonWithScroll from "@/components/BackButton";
+import LikeButton from "@/components/LikeButton";
 
 interface PoemType {
   id: string;
@@ -70,19 +71,15 @@ export default async function PoemPage({
 
   return (
     <main className="min-h-screen bg-white text-gray-900 flex flex-col items-center p-8">
-      <Link
-        href="/poem"
-        scroll={false}
-        aria-label="Back to poems"
-        className="self-start mb-8 text-gray-500 hover:text-gray-800 transition-colors"
-      >
-        ← back to poems
-      </Link>
+      <BackButtonWithScroll />
 
       <article className="w-full max-w-2xl">
         <h1 className="text-4xl font-serif text-center mb-6">{poem.title}</h1>
         <div className="p-8 bg-blush rounded-2xl shadow-md text-xl font-light leading-relaxed whitespace-pre-line">
           {poem.content}
+          <br />
+          <br />
+          <LikeButton poemId={poem.id} />
         </div>
       </article>
     </main>

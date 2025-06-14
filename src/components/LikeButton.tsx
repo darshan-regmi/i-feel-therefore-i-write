@@ -52,8 +52,8 @@ export default function LikeButton({ poemId }: LikeButtonProps) {
       // Sync with server result (in case of mismatch)
       setIsLiked(newStatus);
       // Optionally re-fetch likes count for absolute accuracy
-      // const updatedLikes = await getTotalLikes(poemId);
-      // setTotalLikes(updatedLikes);
+      const updatedLikes = await getTotalLikes(poemId);
+      setTotalLikes(updatedLikes);
     } catch (error) {
       console.error("Error toggling like:", error);
       // Revert optimistic update on failure

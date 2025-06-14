@@ -1,27 +1,34 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import Link from 'next/link'
-import dynamic from 'next/dynamic'
-import SearchBar from './SearchBar'
+import { useState } from "react";
+import dynamic from "next/dynamic";
+import SearchBar from "./SearchBar";
+import { useRouter } from "next/navigation";
 
-const LikeButton = dynamic(() => import('@/components/LikeButton'), {
+const LikeButton = dynamic(() => import("@/components/LikeButton"), {
   ssr: false,
   loading: () => (
     <div className="w-6 h-6 rounded-full bg-gray-300 animate-pulse mr-2" />
   ),
-})
+});
 
 type Poem = {
-  id: string
-  title: string
-  content: string
-}
+  id: string;
+  title: string;
+  content: string;
+};
 
-type Props = { poems: Poem[] }
+type Props = { poems: Poem[] };
 
 export default function PoemsClient({ poems }: Props) {
-  const [filtered, setFiltered] = useState<Poem[]>(poems)
+  const [filtered, setFiltered] = useState<Poem[]>(poems);
+
+  const router = useRouter();
+
+  const handleClick = (id: string) => {
+    sessionStorage.setItem("poems-scroll", String(window.scrollY));
+    router.push(`/poem/${id}`);
+  };
 
   return (
     <div className="w-full flex flex-col items-center">
@@ -31,10 +38,13 @@ export default function PoemsClient({ poems }: Props) {
         {filtered.map((poem) => (
           <li key={poem.id}>
             <div className="p-6 bg-blush rounded-2xl shadow text-lg leading-relaxed hover:shadow-md transition-shadow">
-              <Link href={`/poem/${poem.id}`}>
+              <div
+                onClick={() => handleClick(poem.id)}
+                className="cursor-pointer"
+              >
                 <h2 className="text-xl mb-2 font-medium">{poem.title}</h2>
-                <p>&ldquo;{poem.content?.split('\n')[0] || ''}&rdquo;</p>
-              </Link>
+                <p>&ldquo;{poem.content?.split("\n")[0] || ""}&rdquo;</p>
+              </div>
 
               <div className="mt-4 flex items-center">
                 <LikeButton poemId={poem.id} />
@@ -44,5 +54,5 @@ export default function PoemsClient({ poems }: Props) {
         ))}
       </ul>
     </div>
-  )
+  );
 }
