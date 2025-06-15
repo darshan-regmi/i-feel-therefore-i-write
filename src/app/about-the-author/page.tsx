@@ -2,6 +2,34 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import Footer from "@/components/Footer";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "About the Author",
+  description:
+    "Learn more about Darshan Regmi, the poet behind i feel, therefore i write. Discover his journey, inspirations, and current projects.",
+  openGraph: {
+    title: "About the Author",
+    description:
+      "Learn more about Darshan Regmi, the poet behind i feel, therefore i write. Discover his journey, inspirations, and current projects.",
+    url: "https://poetry.darshanregmi.com.np/about-the-author",
+    images: [
+      {
+        url: "https://poetry.darshanregmi.com.np/author.jpg",
+        width: 800,
+        height: 1000,
+        alt: "Darshan Regmi - Poetry Author",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "About the Author | i feel, therefore i write",
+    description:
+      "Learn more about Darshan Regmi, the poet behind i feel, therefore i write.",
+    images: ["https://poetry.darshanregmi.com.np/author.jpg"],
+  },
+};
 
 const AboutTheAuthor: React.FC = () => {
   return (
