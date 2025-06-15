@@ -20,16 +20,58 @@ export const metadata: Metadata = {
   },
   description:
     "A personal collection of poems by Darshan Regmi. For anyone who's ever felt too much, or not enough.",
+  applicationName: "i feel, therefore i write",
+  themeColor: "#ffffff",
+  category: "poetry",
+  generator: "Next.js 14",
+  alternates: {
+    canonical: "https://poetry.darshanregmi.com.np",
+    languages: {
+      en: "https://poetry.darshanregmi.com.np/en",
+    },
+  },
   keywords: [
+    // Core poetry + writing
     "poetry",
     "poems",
     "creative writing",
+    "short poems",
+    "modern poetry",
+    "free verse poetry",
+    "contemporary poetry",
+    "english poem",
+
+    // Emotional tone
     "emotions",
     "feelings",
-    "literature",
+    "love poems",
+    "sad poems",
+    "emotional poems",
+    "romantic poetry",
+    "self-expression",
+
+    // Personal brand
     "Darshan Regmi",
+    "poet Darshan Regmi",
     "i feel therefore i write",
-    "poet",
+    "wordsbydarshan",
+    "_darshan_regmi",
+    "Nepalese poet",
+
+    // Search-friendly discovery
+    "poetry collection",
+    "online poetry book",
+    "daily poems",
+    "relatable poetry",
+    "aesthetic writing",
+    "poetry website",
+
+    // Bonus discovery hooks
+    "healing through poetry",
+    "personal poems",
+    "poetry for overthinkers",
+    "writing from the heart",
+    "vulnerable poetry",
   ],
   authors: [{ name: "Darshan Regmi", url: "https://darshanregmi.com.np" }],
   creator: "Darshan Regmi",
@@ -84,7 +126,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" dir="ltr" className="scroll-smooth">
+      <head>
+        <meta name="theme-color" content="#ffffff" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
