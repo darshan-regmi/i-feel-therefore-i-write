@@ -128,9 +128,39 @@ export default function RootLayout({
   return (
     <html lang="en" dir="ltr" className="scroll-smooth">
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="preload" as="image" href="/default-og-image.png" />
+        <meta
+          property="og:image:alt"
+          content="Cover image for Darshan Regmi's poetry site"
+        />
+        <link rel="icon" href="/favicon.ico" />
         <meta name="theme-color" content="#ffffff" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta property="og:title" content="i feel, therefore i write" />
+        <meta
+          property="og:description"
+          content="A personal collection of poems by Darshan Regmi. For anyone who's ever felt too much, or not enough."
+        />
+        <meta
+          property="og:image"
+          content="https://poetry.darshanregmi.com.np/default-og-image.png"
+        />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:url" content="https://poetry.darshanregmi.com.np" />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="i feel, therefore i write" />
+        <meta
+          name="twitter:description"
+          content="A personal collection of poems by Darshan Regmi. For anyone who's ever felt too much, or not enough."
+        />
+        <meta
+          name="twitter:image"
+          content="https://poetry.darshanregmi.com.np/default-og-image.png"
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
