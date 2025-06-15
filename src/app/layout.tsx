@@ -161,6 +161,7 @@ export default function RootLayout({
           name="twitter:image"
           content="https://poetry.darshanregmi.com.np/default-og-image.png"
         />
+        <meta name="yandex-verification" content="63f833e2a4ea6374" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
