@@ -34,20 +34,32 @@ export default function PoemsClient({ poems }: Props) {
     <div className="w-full flex flex-col items-center">
       <SearchBar poems={poems} onResults={setFiltered} />
 
-      <ul className="w-full max-w-2xl space-y-4">
+      <ul className="w-full max-w-2xl space-y-4 px-4">
         {filtered.map((poem) => (
           <li key={poem.id}>
-            <div className="p-6 bg-blush rounded-2xl shadow text-lg leading-relaxed hover:shadow-md transition-shadow">
+            <div className="p-6 bg-blush rounded-2xl shadow text-base sm:text-lg leading-relaxed hover:shadow-md transition-shadow">
               <div
                 onClick={() => handleClick(poem.id)}
-                className="cursor-pointer"
+                className="cursor-pointer group"
               >
-                <h2 className="text-xl mb-2 font-medium">{poem.title}</h2>
-                <p>&ldquo;{poem.content?.split("\n")[0] || ""}&rdquo;</p>
-              </div>
+                <h2 className="text-2xl sm:text-3xl mb-2 font-serif">
+                  {poem.title}
+                </h2>
 
-              <div className="mt-4 flex items-center">
-                <LikeButton poemId={poem.id} />
+                <div className="relative max-h-[10.5rem] overflow-hidden">
+                  <p className="whitespace-pre-line break-words text-gray-800">
+                    &ldquo;
+                    {poem.content?.split("\n").slice(0, 4).join("\n") || ""}
+                    &rdquo;
+                  </p>
+                </div>
+
+                <div className="mt-4 flex items-center justify-between">
+                  <LikeButton poemId={poem.id} />
+                  <span className="text-sm text-gray-500 hover:text-gray-800 transition-colors">
+                    Read more →
+                  </span>
+                </div>
               </div>
             </div>
           </li>
