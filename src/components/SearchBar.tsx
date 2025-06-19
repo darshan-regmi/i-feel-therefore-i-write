@@ -29,7 +29,7 @@ export default function SearchBar({ poems, onResults }: SearchBarProps) {
       const matches = fuse.search(query).map((result) => result.item)
       onResults(matches)
     }
-  }, [query, poems])
+  }, [query, poems, onResults])
 
   return (
     <div className="relative w-full max-w-xl mb-6">
