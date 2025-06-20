@@ -30,16 +30,37 @@ export default function LoginPage() {
 
     try {
       const currentUser = auth.currentUser;
+      let newUser = null;
 
       if (!isLogin) {
         if (currentUser && currentUser.isAnonymous) {
           const credential = EmailAuthProvider.credential(email, password);
-          await linkWithCredential(currentUser, credential);
+          const result = await linkWithCredential(currentUser, credential);
+
+          // ✅ Migrate likes from anonymous UID to new UID
+          await migrateLikes(currentUser.uid, result.user.uid);
+          newUser = result.user;
         } else {
-          await createUserWithEmailAndPassword(auth, email, password);
+          const result = await createUserWithEmailAndPassword(
+            auth,
+            email,
+            password
+          );
+          newUser = result.user;
+
+          // Optional: migrate from anonymous UID if you had one earlier
+          if (currentUser?.isAnonymous) {
+            await migrateLikes(currentUser.uid, newUser.uid);
+          }
         }
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        const result = await signInWithEmailAndPassword(auth, email, password);
+        newUser = result.user;
+
+        // Optional: migrate from anonymous UID if logging in after anonymous usage
+        if (currentUser?.isAnonymous && currentUser.uid !== newUser.uid) {
+          await migrateLikes(currentUser.uid, newUser.uid);
+        }
       }
 
       router.push("/liked-poem");
@@ -62,26 +83,30 @@ export default function LoginPage() {
         try {
           const result = await linkWithPopup(currentUser, provider);
 
-          // optional data transfer if needed
+          // ✅ Migrate likes from anonymous UID to new UID
           await migrateLikes(currentUser.uid, result.user.uid);
 
           router.push("/liked-poem");
         } catch (linkError: any) {
           if (linkError.code === "auth/credential-already-in-use") {
-            // Google account is already linked to another account — sign in instead
             const result = await signInWithPopup(auth, provider);
 
-            // optional: transfer anonymous likes to signed-in account
+            // ✅ Migrate likes from anonymous UID to signed-in UID
             await migrateLikes(currentUser.uid, result.user.uid);
 
             router.push("/liked-poem");
           } else {
-            throw linkError; // re-throw if it's a different error
+            throw linkError;
           }
         }
       } else {
-        // not anonymous? just sign in
-        await signInWithPopup(auth, provider);
+        const result = await signInWithPopup(auth, provider);
+
+        // Optional: if coming from anonymous state
+        if (currentUser?.isAnonymous && currentUser.uid !== result.user.uid) {
+          await migrateLikes(currentUser.uid, result.user.uid);
+        }
+
         router.push("/liked-poem");
       }
     } catch (error: any) {

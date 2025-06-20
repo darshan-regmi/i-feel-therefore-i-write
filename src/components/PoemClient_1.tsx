@@ -93,13 +93,13 @@ export default function PoemsClient({ poems }: Props) {
                   </p>
                 </div>
 
+              </div>
                 <div className="mt-4 flex items-center justify-between">
                   <LikeButton poemId={poem.id} />
                   <span className="text-sm text-gray-500 hover:text-gray-800 transition-colors">
                     Read more →
                   </span>
                 </div>
-              </div>
             </div>
           </li>
         ))}
