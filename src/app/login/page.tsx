@@ -50,39 +50,47 @@ export default function LoginPage() {
     }
   };
 
-const handleGoogleSignIn = async () => {
-  setLoading(true);
-  setError("");
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError("");
 
-  try {
-    const provider = new GoogleAuthProvider();
-    const currentUser = auth.currentUser;
+    try {
+      const provider = new GoogleAuthProvider();
+      const currentUser = auth.currentUser;
 
-    if (currentUser?.isAnonymous) {
-      // Link Google account to anonymous user directly
-      const result = await linkWithPopup(currentUser, provider);
+      if (currentUser?.isAnonymous) {
+        try {
+          const result = await linkWithPopup(currentUser, provider);
 
-      // Migrate data if needed
-      await migrateLikes(currentUser.uid, result.user.uid);
+          // optional data transfer if needed
+          await migrateLikes(currentUser.uid, result.user.uid);
 
-      router.push("/liked-poem");
-    } else {
-      await signInWithPopup(auth, provider);
-      router.push("/liked-poem");
-    }
-  } catch (error: any) {
-    console.error(error);
+          router.push("/liked-poem");
+        } catch (linkError: any) {
+          if (linkError.code === "auth/credential-already-in-use") {
+            // Google account is already linked to another account — sign in instead
+            const result = await signInWithPopup(auth, provider);
 
-    // Optional: handle special case for linking error
-    if (error.code === "auth/credential-already-in-use") {
-      setError("this google account is already linked to another user");
-    } else {
+            // optional: transfer anonymous likes to signed-in account
+            await migrateLikes(currentUser.uid, result.user.uid);
+
+            router.push("/liked-poem");
+          } else {
+            throw linkError; // re-throw if it's a different error
+          }
+        }
+      } else {
+        // not anonymous? just sign in
+        await signInWithPopup(auth, provider);
+        router.push("/liked-poem");
+      }
+    } catch (error: any) {
+      console.error(error);
       setError(getErrorMessage(error.code));
+    } finally {
+      setLoading(false);
     }
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const getErrorMessage = (errorCode: string) => {
     switch (errorCode) {
