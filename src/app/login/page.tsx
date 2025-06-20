@@ -7,6 +7,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithPopup,
   GoogleAuthProvider,
+  linkWithPopup,
 } from "firebase/auth";
 import { EmailAuthProvider, linkWithCredential } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -14,7 +15,7 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { migrateLikes } from "@/utils/firebaseUtils";
 
-export default  function LoginPage() {
+export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -41,7 +42,7 @@ export default  function LoginPage() {
         await signInWithEmailAndPassword(auth, email, password);
       }
 
-      router.push("/");
+      router.push("/liked-poem");
     } catch (error: any) {
       setError(getErrorMessage(error.code));
     } finally {
@@ -49,39 +50,33 @@ export default  function LoginPage() {
     }
   };
 
-const handleGoogleSignIn = async () => {
-  setLoading(true);
-  setError("");
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError("");
 
-  try {
-    const provider = new GoogleAuthProvider();
+    try {
+      const provider = new GoogleAuthProvider();
+      const currentUser = auth.currentUser;
 
-    const currentUser = auth.currentUser;
+      if (currentUser?.isAnonymous) {
+        // Link directly instead of signing in
+        const result = await linkWithPopup(currentUser, provider);
 
-    if (currentUser?.isAnonymous) {
-      const result = await signInWithPopup(auth, provider);
+        const newUid = result.user.uid;
+        await migrateLikes(currentUser.uid, newUid);
 
-      const credential = GoogleAuthProvider.credentialFromResult(result);
-      if (!credential) throw new Error("No credential");
-
-      // Migrate likes before linking
-      await migrateLikes(currentUser.uid, result.user.uid);
-
-      // Link accounts
-      await linkWithCredential(currentUser, credential);
-
-      router.push("/");
-    } else {
-      await signInWithPopup(auth, provider);
-      router.push("/");
+        router.push("/liked-poem");
+      } else {
+        await signInWithPopup(auth, provider);
+        router.push("/liked-poem");
+      }
+    } catch (error: any) {
+      console.error(error);
+      setError(getErrorMessage(error.code));
+    } finally {
+      setLoading(false);
     }
-  } catch (error: any) {
-    console.error(error);
-    setError(getErrorMessage(error.code));
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const getErrorMessage = (errorCode: string) => {
     switch (errorCode) {
@@ -96,7 +91,7 @@ const handleGoogleSignIn = async () => {
       case "auth/invalid-email":
         return "this doesn't look like an address";
       default:
-        return "Try again, the key and the address doesn't match up";
+        return "try again — the key and the address don’t match";
     }
   };
 
@@ -241,4 +236,3 @@ const handleGoogleSignIn = async () => {
     </>
   );
 }
-
