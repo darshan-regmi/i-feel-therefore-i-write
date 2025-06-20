@@ -60,9 +60,12 @@ export default function PoemsClient({ poems }: Props) {
                   key={`${poem.id}-${auth.currentUser?.uid}`}
                   poemId={poem.id}
                 />
-                <span className="text-sm text-gray-500 hover:text-gray-800 transition-colors">
+                <div
+                  className="text-sm text-gray-500 hover:text-gray-800 transition-colors"
+                  onClick={() => handleClick(poem.id)}
+                >
                   Read more →
-                </span>
+                </div>
               </div>
             </div>
           </li>
