@@ -1,11 +1,12 @@
 export const revalidate = 60;
-export const runtime = 'edge';
+export const runtime = "edge";
 
 import { Metadata } from "next";
 import { getPoemById } from "@/lib/notion";
 import { notFound } from "next/navigation";
 import BackButtonWithScroll from "@/components/BackButton_1";
 import LikeButton from "@/components/LikeButton";
+import { auth } from "@/lib/firebase";
 
 interface PoemType {
   id: string;
@@ -58,11 +59,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function PoemPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function PoemPage({ params }: { params: { id: string } }) {
   const poem: PoemType | null = await getPoemById(params.id);
 
   if (!poem) {
@@ -79,7 +76,10 @@ export default async function PoemPage({
           {poem.content}
           <br />
           <br />
-          <LikeButton poemId={poem.id} />
+          <LikeButton
+            key={`${poem.id}-${auth.currentUser?.uid}`}
+            poemId={poem.id}
+          />{" "}
         </div>
       </article>
     </main>

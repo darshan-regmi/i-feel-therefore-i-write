@@ -92,14 +92,16 @@ export default function PoemsClient({ poems }: Props) {
                     &rdquo;
                   </p>
                 </div>
-
               </div>
-                <div className="mt-4 flex items-center justify-between">
-                  <LikeButton poemId={poem.id} />
-                  <span className="text-sm text-gray-500 hover:text-gray-800 transition-colors">
-                    Read more →
-                  </span>
-                </div>
+              <div className="mt-4 flex items-center justify-between">
+                <LikeButton
+                  key={`${poem.id}-${auth.currentUser?.uid}`}
+                  poemId={poem.id}
+                />
+                <span className="text-sm text-gray-500 hover:text-gray-800 transition-colors">
+                  Read more →
+                </span>
+              </div>
             </div>
           </li>
         ))}

@@ -43,11 +43,14 @@ export const ensureAuth = async (): Promise<string> => {
 };
 
 /**
- * Checks if the current user has liked a specific poem.
+ * Checks if the specified (or current) user has liked a specific poem.
  */
-export const getUserLikeStatus = async (poemId: string): Promise<boolean> => {
+export const getUserLikeStatus = async (
+  poemId: string,
+  userId?: string
+): Promise<boolean> => {
   try {
-    const uid = await ensureAuth();
+    const uid = userId ?? (await ensureAuth());
     const userLikeRef = doc(db, LIKES_COLLECTION, `${uid}-${poemId}`);
     const userLikeDoc = await getDoc(userLikeRef);
     return userLikeDoc.exists();
@@ -58,12 +61,15 @@ export const getUserLikeStatus = async (poemId: string): Promise<boolean> => {
 };
 
 /**
- * Toggles a like on a poem for the current user.
+ * Toggles a like on a poem for the specified (or current) user.
  * Returns `true` if liked, `false` if unliked.
  */
-export const toggleLike = async (poemId: string): Promise<boolean> => {
+export const toggleLike = async (
+  poemId: string,
+  userId?: string
+): Promise<boolean> => {
   try {
-    const uid = await ensureAuth();
+    const uid = userId ?? (await ensureAuth());
     const userLikeRef = doc(db, LIKES_COLLECTION, `${uid}-${poemId}`);
     const poemRef = doc(db, POEMS_COLLECTION, poemId);
 
@@ -72,7 +78,6 @@ export const toggleLike = async (poemId: string): Promise<boolean> => {
       getDoc(poemRef),
     ]);
 
-    // Ensure poem doc exists
     if (!poemDoc.exists()) {
       await setDoc(poemRef, { likes: 0 }, { merge: true });
     }
