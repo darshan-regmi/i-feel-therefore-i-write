@@ -50,33 +50,39 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
-    setError("");
+const handleGoogleSignIn = async () => {
+  setLoading(true);
+  setError("");
 
-    try {
-      const provider = new GoogleAuthProvider();
-      const currentUser = auth.currentUser;
+  try {
+    const provider = new GoogleAuthProvider();
+    const currentUser = auth.currentUser;
 
-      if (currentUser?.isAnonymous) {
-        // Link directly instead of signing in
-        const result = await linkWithPopup(currentUser, provider);
+    if (currentUser?.isAnonymous) {
+      // Link Google account to anonymous user directly
+      const result = await linkWithPopup(currentUser, provider);
 
-        const newUid = result.user.uid;
-        await migrateLikes(currentUser.uid, newUid);
+      // Migrate data if needed
+      await migrateLikes(currentUser.uid, result.user.uid);
 
-        router.push("/liked-poem");
-      } else {
-        await signInWithPopup(auth, provider);
-        router.push("/liked-poem");
-      }
-    } catch (error: any) {
-      console.error(error);
-      setError(getErrorMessage(error.code));
-    } finally {
-      setLoading(false);
+      router.push("/liked-poem");
+    } else {
+      await signInWithPopup(auth, provider);
+      router.push("/liked-poem");
     }
-  };
+  } catch (error: any) {
+    console.error(error);
+
+    // Optional: handle special case for linking error
+    if (error.code === "auth/credential-already-in-use") {
+      setError("this google account is already linked to another user");
+    } else {
+      setError(getErrorMessage(error.code));
+    }
+  } finally {
+    setLoading(false);
+  }
+};
 
   const getErrorMessage = (errorCode: string) => {
     switch (errorCode) {
