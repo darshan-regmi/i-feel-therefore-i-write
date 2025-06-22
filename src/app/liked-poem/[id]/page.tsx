@@ -1,4 +1,5 @@
 export const revalidate = 60;
+export const runtime = 'edge';
 
 import { Metadata } from "next";
 import { getPoemById } from "@/lib/notion";
