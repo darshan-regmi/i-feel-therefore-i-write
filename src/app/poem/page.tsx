@@ -55,7 +55,6 @@ export const metadata: Metadata = {
 export default async function PoemsPage() {
   try {
     const res = await fetch("https://poetry.darshanregmi.com.np/api/poem", {
-      cache: 'force-cache',
       next: { revalidate: 60 },
     });
 
