@@ -1,4 +1,5 @@
-export const revalidate = 1;
+export const revalidate = 60;
+export const runtime = "edge";
 
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -54,6 +55,7 @@ export const metadata: Metadata = {
 export default async function PoemsPage() {
   try {
     const res = await fetch("https://poetry.darshanregmi.com.np/api/poem", {
+      cache: 'force-cache',
       next: { revalidate: 60 },
     });
 
