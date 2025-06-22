@@ -1,4 +1,5 @@
-// src/app/api/revalidate/route.ts
+export const runtime = 'edge';
+
 import { revalidatePath } from 'next/cache';
 import { NextRequest } from 'next/server';
 
