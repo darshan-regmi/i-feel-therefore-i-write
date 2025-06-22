@@ -118,7 +118,7 @@ export default function LikeButton({ poemId }: LikeButtonProps) {
             exit={{ scale: 0.8 }}
             transition={{ type: "spring", stiffness: 300, damping: 15 }}
           >
-            <FaHeart className="w-5 h-5 text-red-500" />
+            <FaHeart className="w-5 h-5 text-red-500 cursor-pointer group" />
           </motion.div>
         ) : (
           <motion.div
@@ -128,7 +128,7 @@ export default function LikeButton({ poemId }: LikeButtonProps) {
             exit={{ scale: 0.8 }}
             transition={{ type: "spring", stiffness: 300, damping: 15 }}
           >
-            <FaRegHeart className="w-5 h-5 text-gray-600 hover:text-red-500" />
+            <FaRegHeart className="w-5 h-5 text-gray-600 hover:text-red-500 cursor-pointer group" />
           </motion.div>
         )}
       </AnimatePresence>

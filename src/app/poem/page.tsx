@@ -1,10 +1,10 @@
 export const revalidate = 60;
-export const runtime = "edge";
 
 import type { Metadata } from "next";
 import Link from "next/link";
 import PoemsWrapper from "@/components/PoemsWrapper";
 import { FaHeart } from "react-icons/fa";
+import { getPoemsFromNotion } from "@/lib/notion";
 
 export const metadata: Metadata = {
   title: "my poems",
@@ -54,11 +54,7 @@ export const metadata: Metadata = {
 
 export default async function PoemsPage() {
   try {
-    const res = await fetch("https://poetry.darshanregmi.com.np/api/poem", {
-      next: { revalidate: 60 },
-    });
-
-    const poems = await res.json();
+    const poems = await getPoemsFromNotion();
 
     return (
       <main className="min-h-screen bg-white text-gray-900 flex flex-col items-center p-8">

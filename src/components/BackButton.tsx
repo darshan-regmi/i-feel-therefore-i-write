@@ -12,7 +12,7 @@ export default function BackButton() {
   return (
     <button
       onClick={handleBack}
-      className="self-start mb-6 text-gray-500 hover:text-gray-800 transition-colors"
+      className="self-start mb-6 text-gray-500 hover:text-gray-800 transition-colors cursor-pointer group"
     >
       ← back to poems
     </button>

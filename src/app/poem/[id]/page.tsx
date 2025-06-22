@@ -1,5 +1,4 @@
-export const revalidate = 60;
-export const runtime = "edge";
+export const revalidate = 60; // Keep page fresh every 1 min
 
 import { Metadata } from "next";
 import { getPoemById } from "@/lib/notion";
@@ -79,7 +78,7 @@ export default async function PoemPage({ params }: { params: { id: string } }) {
           <LikeButton
             key={`${poem.id}-${auth.currentUser?.uid}`}
             poemId={poem.id}
-          />{" "}
+          />
         </div>
       </article>
     </main>

@@ -41,14 +41,14 @@ export default function PoemsClient({ poems }: Props) {
             <div className="p-6 bg-blush rounded-2xl shadow text-base sm:text-lg leading-relaxed hover:shadow-md transition-shadow">
               <div
                 onClick={() => handleClick(poem.id)}
-                className="cursor-pointer group"
+                className="cursor-pointer group rounded-xl "
               >
-                <h2 className="text-2xl sm:text-3xl mb-2 font-serif">
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-serif mb-2 text-gray-900 group-hover:text-black transition">
                   {poem.title}
                 </h2>
 
-                <div className="relative max-h-[10.5rem] overflow-hidden">
-                  <p className="whitespace-pre-line break-words text-gray-800">
+                <div className="relative max-h-[9.5rem] sm:max-h-[11rem] md:max-h-[13rem] overflow-hidden">
+                  <p className="whitespace-pre-line break-words text-sm sm:text-base text-gray-800 leading-snug sm:leading-normal">
                     &ldquo;
                     {poem.content?.split("\n").slice(0, 4).join("\n") || ""}
                     &rdquo;

@@ -6,7 +6,7 @@ import {
 } from '@notionhq/client/build/src/api-endpoints';
 
 const notion = new Client({
-  auth:"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",
+  auth: "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",
 })
 
 const databaseId = "209419347bda80089684fc2ae3e15149"!
@@ -32,7 +32,7 @@ async function queryDatabase(
 }
 
 /**
- * Fetch all published poems. Sorted in descending order by the “Content” property (adjust if needed).
+ * Fetch all published poems. Sorted in descending order by the "Updated time" property.
  */
 export async function getPoemsFromNotion() {
   const pages = await queryDatabase({
@@ -58,7 +58,7 @@ export async function getPoemsFromNotion() {
 
     const content =
       page.properties.Content?.type === 'rich_text' &&
-      page.properties.Content.rich_text[0]
+        page.properties.Content.rich_text[0]
         ? page.properties.Content.rich_text[0].plain_text
         : '(No content)';
 
@@ -73,8 +73,12 @@ export async function getPoemsFromNotion() {
 /**
  * Retrieve a single poem by page ID.
  */
+const poemCache = new Map<string, { id: string; title: string; content: string }>();
+
 export async function getPoemById(id: string) {
-  const page = (await notion.pages.retrieve({ page_id: id })) as PageObjectResponse;
+  if (poemCache.has(id)) return poemCache.get(id)!;
+
+  const page = await notion.pages.retrieve({ page_id: id }) as PageObjectResponse;
 
   const title =
     page.properties.Title?.type === 'title' && page.properties.Title.title[0]
@@ -86,11 +90,9 @@ export async function getPoemById(id: string) {
       ? page.properties.Content.rich_text[0].plain_text
       : '(No content)';
 
-  return {
-    id: page.id,
-    title,
-    content,
-  };
+  const poem = { id: page.id, title, content };
+  poemCache.set(id, poem);
+  return poem;
 }
 
 /**
