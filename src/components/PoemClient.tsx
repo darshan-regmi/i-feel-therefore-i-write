@@ -61,7 +61,7 @@ export default function PoemsClient({ poems }: Props) {
                   poemId={poem.id}
                 />
                 <div
-                  className="text-sm text-gray-500 hover:text-gray-800 transition-colors"
+                  className="text-sm text-gray-500 hover:text-gray-800 transition-colors cursor-pointer group"
                   onClick={() => handleClick(poem.id)}
                 >
                   Read more →
