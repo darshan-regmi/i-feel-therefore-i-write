@@ -61,8 +61,7 @@ export const getUserLikeStatus = async (
 ): Promise<boolean> => {
   try {
     const uid = userId ?? (await getUid());
-    const userLikeRef = doc(db, LIKES_COLLECTION, `${uid}-${poemId}`);
-    const userLikeDoc = await getDoc(userLikeRef);
+    const userLikeRef = doc(db, LIKES_COLLECTION, `${poemId}_${uid}`); const userLikeDoc = await getDoc(userLikeRef);
     return userLikeDoc.exists();
   } catch (error) {
     console.error('Error checking like status:', error);
@@ -79,8 +78,7 @@ export const toggleLike = async (
 ): Promise<boolean> => {
   try {
     const uid = userId ?? (await getUid());
-    const userLikeRef = doc(db, LIKES_COLLECTION, `${uid}-${poemId}`);
-    const poemRef = doc(db, POEMS_COLLECTION, poemId);
+    const userLikeRef = doc(db, LIKES_COLLECTION, `${poemId}_${uid}`); const poemRef = doc(db, POEMS_COLLECTION, poemId);
 
     const userLikeDoc = await getDoc(userLikeRef);
     const batch = writeBatch(db);
