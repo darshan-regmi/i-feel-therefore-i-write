@@ -1,3 +1,5 @@
+export const runtime = 'edge';
+
 // Route to sync poems from Notion to Firestore
 
 import { NextResponse } from 'next/server';
