@@ -39,7 +39,7 @@ export default function LikeButton({ poemId }: LikeButtonProps) {
   // 🔄 Re-fetch like status + count when user or poemId changes
   useEffect(() => {
     const initialize = async () => {
-      setLoading(true);
+      setLoading(false);
       try {
         const likes = await getTotalLikes(poemId);
 

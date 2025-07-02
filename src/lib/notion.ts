@@ -6,7 +6,7 @@ import {
 } from '@notionhq/client/build/src/api-endpoints';
 
 const notion = new Client({
-  auth: process.env.NOTION_API_KEY,
+  auth: "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;"!,
 })
 
 const databaseId = "209419347bda80089684fc2ae3e15149"!
