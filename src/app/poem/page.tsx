@@ -7,46 +7,48 @@ import PoemsWrapper from "@/components/PoemsWrapper";
 import { FaHeart } from "react-icons/fa";
 
 export const metadata: Metadata = {
-  title: "my poems",
+  title: "Poems by Darshan Regmi",
   description:
-    "Browse a collection of poems by Darshan Regmi. Discover verses on emotion, experience, and reflection.",
+    "Explore Darshan Regmi’s collection of soulful poetry—emotional, reflective, and unapologetically human. Poems about love, loss, healing, and everything in between.",
   keywords: [
-    "poetry collection",
     "Darshan Regmi poems",
-    "online poems",
-    "emotional poetry",
-    "modern poetry",
-    "poems about love",
     "i feel therefore i write",
+    "emotional poetry",
+    "modern poetry collection",
+    "poems about love",
+    "soulful poems",
+    "spoken word poetry",
+    "Nepali poet",
+    "poetry on heartbreak and healing",
   ],
   alternates: {
-    canonical: "https://poetry.darshanregmi.com.np/poem",
+    canonical: "https://poetry.darshanregmi.com.np/poems",
   },
   openGraph: {
-    title: "All Poems | i feel, therefore i write",
+    title: "Darshan Regmi’s Poetry | i feel, therefore i write",
     description:
-      "Browse a collection of poems by Darshan Regmi. Discover verses on emotion, experience, and reflection.",
-    url: "https://poetry.darshanregmi.com.np/poem",
+      "A deeply emotional and beautifully written collection of poems by Darshan Regmi. Discover verses that speak to the soul.",
+    url: "https://poetry.darshanregmi.com.np/poems",
     siteName: "i feel, therefore i write",
     locale: "en_US",
     type: "website",
     images: [
       {
-        url: "https://poetry.darshanregmi.com.np/default-og-image.png",
+        url: "https://poetry.darshanregmi.com.np/og-darshan-poetry.png",
         width: 1200,
         height: 630,
-        alt: "i feel, therefore i write",
+        alt: "Poetry by Darshan Regmi – i feel, therefore i write",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "All Poems | i feel, therefore i write",
+    title: "Darshan Regmi’s Poems | i feel, therefore i write",
     description:
-      "Browse a collection of poems by Darshan Regmi. Discover verses on emotion, experience, and reflection.",
+      "A personal archive of poetry by Darshan Regmi. Read poems that explore love, loneliness, memory, and meaning.",
     images: [
       {
-        url: "https://poetry.darshanregmi.com.np/default-og-image.png",
+        url: "https://poetry.darshanregmi.com.np/og-darshan-poetry.png",
       },
     ],
   },

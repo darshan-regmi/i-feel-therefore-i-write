@@ -15,13 +15,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://poetry.darshanregmi.com.np"),
   title: {
-    default: "i feel, therefore i write - Poetry Collection",
+    default: "Poetry by Darshan Regmi | i feel, therefore i write",
     template: "%s | i feel, therefore i write",
   },
   description:
-    "A personal collection of poems by Darshan Regmi. For anyone who's ever felt too much, or not enough.",
+    "A personal collection of poems by Darshan Regmi. For anyone who's ever felt too much, or not enough—verses that echo love, loss, healing, and self-discovery.",
   applicationName: "i feel, therefore i write",
-  themeColor: "#ffffff",
+  themeColor: "#111827", // emotionally deep and visually clean
   category: "poetry",
   generator: "Next.js 14",
   alternates: {
@@ -31,47 +31,41 @@ export const metadata: Metadata = {
     },
   },
   keywords: [
-    // Core poetry + writing
+    // Core poetry topics
     "poetry",
     "poems",
     "creative writing",
-    "short poems",
     "modern poetry",
-    "free verse poetry",
+    "free verse",
+    "english poems",
+    "short poems",
     "contemporary poetry",
-    "english poem",
 
-    // Emotional tone
-    "emotions",
-    "feelings",
-    "love poems",
-    "sad poems",
+    // Emotional angles
     "emotional poems",
-    "romantic poetry",
-    "self-expression",
+    "love poems",
+    "sad poetry",
+    "healing through poetry",
+    "vulnerable writing",
+    "poetry for overthinkers",
+    "relatable poetry",
 
-    // Personal brand
+    // Personal branding
     "Darshan Regmi",
-    "poet Darshan Regmi",
     "i feel therefore i write",
     "wordsbydarshan",
     "_darshan_regmi",
     "Nepalese poet",
+    "young poets",
+    "emerging writers",
 
-    // Search-friendly discovery
-    "poetry collection",
-    "online poetry book",
-    "daily poems",
-    "relatable poetry",
-    "aesthetic writing",
+    // Discovery + aesthetic
+    "online poetry collection",
+    "aesthetic poems",
     "poetry website",
-
-    // Bonus discovery hooks
-    "healing through poetry",
-    "personal poems",
-    "poetry for overthinkers",
-    "writing from the heart",
-    "vulnerable poetry",
+    "poetry blog",
+    "daily poems",
+    "poetry for the soul",
   ],
   authors: [{ name: "Darshan Regmi", url: "https://darshanregmi.com.np" }],
   creator: "Darshan Regmi",
@@ -93,9 +87,9 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: "i feel, therefore i write",
+    title: "Poetry by Darshan Regmi | i feel, therefore i write",
     description:
-      "A personal collection of poems by Darshan Regmi. For anyone who's ever felt too much, or not enough.",
+      "A soulful archive of poems by Darshan Regmi. Explore verses on love, longing, healing, and the beautiful ache of being human.",
     url: "https://poetry.darshanregmi.com.np",
     siteName: "i feel, therefore i write",
     images: [
@@ -103,7 +97,7 @@ export const metadata: Metadata = {
         url: "https://poetry.darshanregmi.com.np/default-og-image.png",
         width: 1200,
         height: 630,
-        alt: "i feel, therefore i write",
+        alt: "Poetry by Darshan Regmi – i feel, therefore i write",
       },
     ],
     locale: "en_US",
@@ -111,9 +105,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "i feel, therefore i write",
+    title: "Poetry by Darshan Regmi | i feel, therefore i write",
     description:
-      "A personal collection of poems by Darshan Regmi. For anyone who's ever felt too much, or not enough.",
+      "A personal poetry collection exploring emotion, reflection, and vulnerability. Written by Darshan Regmi.",
     site: "@Regmi6Darshan",
     creator: "@Regmi6Darshan",
     images: ["https://poetry.darshanregmi.com.np/default-og-image.png"],
@@ -128,7 +122,15 @@ export default function RootLayout({
   return (
     <html lang="en" dir="ltr" className="scroll-smooth">
       <head>
+        <title>
+          i feel, therefore i write — Poetry Collection by Darshan Regmi
+        </title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta
+          name="description"
+          content="A personal collection of poems by Darshan Regmi. For anyone who's ever felt too much, or not enough."
+        />
+        <link rel="canonical" href="https://poetry.darshanregmi.com.np" />
         <link rel="preload" as="image" href="/default-og-image.png" />
         <meta
           property="og:image:alt"

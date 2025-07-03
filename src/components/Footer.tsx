@@ -1,5 +1,5 @@
 import React from "react";
-import { FaGlobe, FaGithub, FaLinkedin, FaTwitter } from "react-icons/fa";
+import { FaGlobe, FaGithub, FaLinkedin, FaTwitter, FaInstagram } from "react-icons/fa";
 
 const Footer: React.FC = () => {
   return (
@@ -37,6 +37,15 @@ const Footer: React.FC = () => {
           className="hover:text-sky-500"
         >
           <FaTwitter />
+        </a>
+        <a
+          href="https://www.instagram.com/_darshan_regmi"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-pink-500"
+          aria-label="Instagram"
+        >
+          <FaInstagram />
         </a>
       </div>
       <p className="mt-4 text-xs text-gray-400">
