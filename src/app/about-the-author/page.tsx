@@ -63,27 +63,19 @@ const AboutTheAuthor: React.FC = () => {
             {/* Text */}
             <div className="text-base sm:text-lg text-gray-700 leading-relaxed space-y-4 max-w-xl">
               <p>
-                Hey, I&#39;m <strong>Darshan Regmi</strong>. I write poems to
-                feel, to heal, and to remember. My words come from quiet nights,
-                soft love, and memories that never quite leave.
+                Hey, I’m <strong>Darshan Regmi</strong>. I write poems to feel,
+                to heal, and to remember. My words are born from quiet nights,
+                soft love, and the kind of memories that linger.
               </p>
 
               <p>
-                I&#39;m working on my first book, <em>“Our Story”</em> — a
-                journey through love, loss, and becoming whole again.
+                I’m currently working on my first poetry book,{" "}
+                <em>“Our Story”</em> — a tender journey through love, loss, and
+                the slow, beautiful act of becoming whole again.
               </p>
 
               <p>
-                I share my poetry on{" "}
-                <a
-                  href="https://instagram.com/wordsbydarshan"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  @wordsbydarshan
-                </a>
-                , and glimpses of my life on{" "}
+                Find fragments of my life and poetry on{" "}
                 <a
                   href="https://instagram.com/_darshan_regmi"
                   target="_blank"
