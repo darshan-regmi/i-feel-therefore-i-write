@@ -1,5 +1,11 @@
 User-agent: *
 Allow: /
+
 Disallow: /api/
+Disallow: /login
+Disallow: /liked-poem
+Disallow: /about-the-author/loading
+Disallow: /poem/*/loading
+Disallow: /liked-poem/*/loading
 
 Sitemap: https://poetry.darshanregmi.com.np/sitemap.xml
