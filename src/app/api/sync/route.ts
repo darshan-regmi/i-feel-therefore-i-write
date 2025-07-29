@@ -1,9 +1,10 @@
-export const runtime = 'edge';
+// Prefer Node.js runtime for Firebase compatibility
+export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
 import { getPoemsFromNotion } from '@/lib/notion';
 import { db } from '@/lib/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 export async function GET() {
   try {
@@ -15,19 +16,21 @@ export async function GET() {
     console.log('✅ Sync route hit. Starting sync...');
 
     const poems = await getPoemsFromNotion();
-
     console.log(`✅ Found ${poems.length} poems.`);
 
     for (const poem of poems) {
       const poemRef = doc(db, 'poems', poem.id);
-      await setDoc(poemRef, {
-        poemId: poem.id,
-        title: poem.title,
-        content: poem.content,
-        userId: 'system',
-        likes: 0,
-        createdAt: new Date(),
-      }, { merge: true });
+      const poemSnap = await getDoc(poemRef);
+
+      // Only create the doc if it doesn't exist
+      if (!poemSnap.exists()) {
+        await setDoc(poemRef, {
+          likes: 0,
+        });
+        console.log(`📝 Added new poem: ${poem.id}`);
+      } else {
+        console.log(`⚠️ Skipped existing poem: ${poem.id}`);
+      }
     }
 
     return NextResponse.json({ success: true, message: 'Poems synced from Notion.' });

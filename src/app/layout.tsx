@@ -12,6 +12,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport = {
+  themeColor: "#111827",
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://poetry.darshanregmi.com.np"),
   title: {
@@ -21,7 +25,6 @@ export const metadata: Metadata = {
   description:
     "A personal collection of poems by Darshan Regmi. For anyone who's ever felt too much, or not enough—verses that echo love, loss, healing, and self-discovery.",
   applicationName: "i feel, therefore i write",
-  themeColor: "#111827", // emotionally deep and visually clean
   category: "poetry",
   generator: "Next.js 14",
   alternates: {
@@ -121,50 +124,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" dir="ltr" className="scroll-smooth">
-      <head>
-        <title>
-          i feel, therefore i write — Poetry Collection by Darshan Regmi
-        </title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta
-          name="description"
-          content="A personal collection of poems by Darshan Regmi. For anyone who's ever felt too much, or not enough."
-        />
-        <link rel="canonical" href="https://poetry.darshanregmi.com.np" />
-        <link rel="preload" as="image" href="/default-og-image.png" />
-        <meta
-          property="og:image:alt"
-          content="Cover image for Darshan Regmi's poetry site"
-        />
-        <link rel="icon" href="/favicon.ico" />
-        <meta name="theme-color" content="#ffffff" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta property="og:title" content="i feel, therefore i write" />
-        <meta
-          property="og:description"
-          content="A personal collection of poems by Darshan Regmi. For anyone who's ever felt too much, or not enough."
-        />
-        <meta
-          property="og:image"
-          content="https://poetry.darshanregmi.com.np/default-og-image.png"
-        />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        <meta property="og:url" content="https://poetry.darshanregmi.com.np" />
-        <meta property="og:type" content="website" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="i feel, therefore i write" />
-        <meta
-          name="twitter:description"
-          content="A personal collection of poems by Darshan Regmi. For anyone who's ever felt too much, or not enough."
-        />
-        <meta
-          name="twitter:image"
-          content="https://poetry.darshanregmi.com.np/default-og-image.png"
-        />
-        <meta name="yandex-verification" content="63f833e2a4ea6374" />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

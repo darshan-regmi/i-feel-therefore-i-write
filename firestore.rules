@@ -2,49 +2,57 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- Public Read Access (Optional: Make this collection-specific if needed later) ---
+    // Poems collection rules
     match /poems/{poemId} {
       // Anyone can read poems
       allow read: if true;
 
-      // Only authenticated users can create poems and only for themselves
-      allow create: if request.auth != null &&
-                    request.resource.data.userId == request.auth.uid;
+      // Only authenticated users can create poems for themselves,
+      // with required fields validation
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.title is string
+                    && request.resource.data.title.size() > 0
+                    && request.resource.data.content is string
+                    && request.resource.data.content.size() > 0
+                    // Optional: validate likes field presence and type on create
+                    && (!('likes' in request.resource.data) || request.resource.data.likes is int);
 
-      // Only allow updating the "likes" field by any signed-in user
-      allow update: if request.auth != null &&
-                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']);
+      // Allow updates only to the 'likes' field by any signed-in user
+      allow update: if request.auth != null
+                    && request.resource.data.keys().hasOnly(['likes'])
+                    && request.resource.data.likes is int;
 
-      // Only allow the poem owner to delete their poem
-      allow delete: if request.auth != null &&
-                    request.auth.uid == resource.data.userId;
+      // Only poem owner can delete the poem
+      allow delete: if request.auth != null
+                    && request.auth.uid == resource.data.userId;
     }
 
-    // --- Likes Collection ---
+    // Likes collection rules
     match /likes/{likeId} {
-      // Allow read to everyone (if needed, otherwise remove this)
-      allow read: if true;
+      // Allow users to read only their own likes
+      allow read: if request.auth != null
+                  && request.auth.uid == resource.data.userId;
 
-      // Only allow the user to create a like doc for themselves, with strict ID format
-      allow create: if request.auth != null &&
-                    likeId == request.resource.data.poemId + "_" + request.auth.uid &&
-                    request.resource.data.userId == request.auth.uid;
+      // Allow creation only if likeId matches "poemId_userId" pattern,
+      // and userId matches authenticated user
+      allow create: if request.auth != null
+                    && likeId == request.resource.data.poemId + "_" + request.auth.uid
+                    && request.resource.data.userId == request.auth.uid
+                    // Optional: Validate timestamp field
+                    && request.resource.data.timestamp is timestamp;
 
-      // Only allow the owner of the like to delete it
-      allow delete: if request.auth != null &&
-                    request.auth.uid == resource.data.userId;
+      // Allow deleting own like documents only
+      allow delete: if request.auth != null
+                    && request.auth.uid == resource.data.userId;
 
       // Disallow updates entirely
       allow update: if false;
     }
 
-    // --- [Optional] Comments or Other Collections ---
-    // match /comments/{commentId} { ... }
-
-    // --- Catch-all: Deny everything else by default ---
+    // Catch-all deny all other access
     match /{document=**} {
-      allow read: if false;
-      allow write: if false;
+      allow read, write: if false;
     }
   }
 }
