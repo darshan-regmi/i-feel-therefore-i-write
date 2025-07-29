@@ -60,6 +60,10 @@ export default async function PoemsPage() {
       next: { revalidate: 60 },
     });
 
+    if (!res.ok) {
+      throw new Error(`Failed to fetch poems: ${res.status}`);
+    }
+
     const poems = await res.json();
 
     return (
@@ -92,5 +96,12 @@ export default async function PoemsPage() {
     );
   } catch (error) {
     console.error(error);
+    return (
+      <main className="min-h-screen flex items-center justify-center p-8">
+        <p className="text-red-600 text-center text-lg max-w-md">
+          Sorry, we couldn&#39;t load the poems right now. Please try again later.
+        </p>
+      </main>
+    );
   }
 }
