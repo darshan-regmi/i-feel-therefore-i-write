@@ -1,5 +1,5 @@
 // Prefer Node.js runtime for Firebase compatibility
-export const runtime = 'nodejs';
+export const runtime = 'edge';
 
 import { NextResponse } from 'next/server';
 import { getPoemsFromNotion } from '@/lib/notion';
