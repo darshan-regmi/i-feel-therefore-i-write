@@ -41,6 +41,24 @@ npm install
 npm run dev
 ```
 
+## 🔁 Automatic Notion → Firestore Sync
+
+If you deploy on Cloudflare (Pages + Functions):
+
+- Enable a Cron Trigger in Cloudflare Dashboard to call your site’s `/api/sync` endpoint on a schedule (e.g., hourly: `0 * * * *`).
+- Alternatively, create a minimal Cloudflare Worker that fetches your Pages URL `/api/sync` on the cron schedule.
+- Ensure `NOTION_API_KEY` is set in your Cloudflare project environment variables.
+
+Example Worker (optional):
+
+```javascript
+export default {
+  async scheduled(controller, env, ctx) {
+    await fetch(env.SITE_URL + "/api/sync");
+  }
+};
+```
+
 # 📌 Project Structure (App Router)
 ```bash
 /app

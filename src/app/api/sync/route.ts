@@ -1,4 +1,4 @@
-// Prefer Node.js runtime for Firebase compatibility
+// Edge runtime (Cloudflare compatible)
 export const runtime = 'edge';
 
 import { NextResponse } from 'next/server';
