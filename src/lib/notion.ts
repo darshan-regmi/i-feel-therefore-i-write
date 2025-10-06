@@ -44,7 +44,7 @@ export async function getPoemsFromNotion() {
     },
     sorts: [
       {
-        property: 'UpdatedAt',
+        property: 'CreatedAt',
         direction: 'descending',
       },
     ],

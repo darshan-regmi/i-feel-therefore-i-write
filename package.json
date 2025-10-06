@@ -21,7 +21,8 @@
     "react-dom": "^18.2.0",
     "react-icons": "^5.5.0",
     "react-markdown": "^10.1.0",
-    "react-window": "^1.8.11"
+    "react-window": "^1.8.11",
+    "wrangler": "^4.42.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
