@@ -59,6 +59,20 @@ export default {
 };
 ```
 
+### Cloudflare Worker provided in this repo
+
+- Worker file: `cloudflare-worker/worker.ts`
+- Config: `wrangler.toml` (sets hourly cron and `SITE_URL` variable)
+- Before deploy, set `SITE_URL` to your domain in `wrangler.toml` or via CLI:
+
+```bash
+wrangler kv:namespace create SITE_URL # if using KV, not required here
+wrangler secret put NOTION_API_KEY
+wrangler deploy
+```
+
+Note: The Worker only needs `SITE_URL` as a plain text var. `NOTION_API_KEY` is used by your Next.js app; set it in your Cloudflare Pages project env.
+
 # 📌 Project Structure (App Router)
 ```bash
 /app

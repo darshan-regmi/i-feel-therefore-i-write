@@ -1,0 +1,11 @@
+name = "i-feel-sync-cron"
+main = "cloudflare-worker/worker.ts"
+compatibility_date = "2025-01-01"
+
+[triggers]
+crons = ["0 * * * *"]
+
+[vars]
+# Set to your production site URL (no trailing slash), e.g. https://poetry.darshanregmi.com.np
+SITE_URL = "https://poetry.darshanregmi.com.np"
+
