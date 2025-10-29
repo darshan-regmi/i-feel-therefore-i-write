@@ -64,7 +64,8 @@ export default async function PoemsPage() {
       throw new Error(`Failed to fetch poems: ${res.status}`);
     }
 
-    const poems = await res.json();
+    const data = await res.json();
+    const poems = Array.isArray(data) ? data : data.results || data.poems || [];
 
     return (
       <main className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-slate-50 text-gray-900 flex flex-col items-center p-6 sm:p-8">

@@ -21,9 +21,13 @@ export default function LikedPoemPage() {
           try {
             const res = await fetch("/api/poem");
             const data = await res.json();
-            setPoems(data);
+
+            // ✅ Extract array safely
+            const poemsArray = Array.isArray(data.poems) ? data.poems : [];
+            setPoems(poemsArray);
           } catch (err) {
             console.error("Failed to fetch poems:", err);
+            setPoems([]); // fallback
           } finally {
             setLoading(false);
           }
