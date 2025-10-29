@@ -19,9 +19,7 @@ export default function LikedPoemPage() {
       } else {
         const fetchPoems = async () => {
           try {
-            const res = await fetch(
-              "/api/poem"
-            );
+            const res = await fetch("/api/poem");
             const data = await res.json();
             setPoems(data);
           } catch (err) {
@@ -31,7 +29,7 @@ export default function LikedPoemPage() {
           }
         };
 
-        fetchPoems(); // ✅ safe async call inside sync listener
+        fetchPoems();
       }
     });
 
@@ -40,51 +38,95 @@ export default function LikedPoemPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-white text-black flex flex-col items-center justify-center px-6 py-12">
-      <div className="w-full max-w-2xl p-8 rounded-xl shadow-sm border border-gray-200 animate-pulse bg-white">
-        
-        {/* Title Skeleton */}
-        <div className="h-10 w-3/4 bg-gray-200 rounded mb-6"></div>
+      <main className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-slate-50 text-black flex flex-col items-center justify-center px-6 py-12 relative overflow-hidden">
+        {/* Subtle background decoration */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-100/30 via-transparent to-transparent pointer-events-none"></div>
 
-        {/* Poem Skeleton Lines */}
-        <div className="space-y-4">
-          <div className="h-5 w-full bg-gray-100 rounded"></div>
-          <div className="h-5 w-5/6 bg-gray-100 rounded"></div>
-          <div className="h-5 w-2/3 bg-gray-100 rounded"></div>
-          <div className="h-5 w-3/4 bg-gray-100 rounded"></div>
-          <div className="h-5 w-full bg-gray-100 rounded"></div>
-          <div className="h-5 w-4/6 bg-gray-100 rounded"></div>
+        <div className="relative z-10 w-full max-w-3xl space-y-6">
+          {/* Multiple skeleton cards */}
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="p-8 rounded-2xl border border-gray-200 animate-pulse bg-white shadow-sm"
+              style={{ animationDelay: `${i * 100}ms` }}
+            >
+              {/* Title Skeleton */}
+              <div className="h-8 w-3/4 bg-gray-200 rounded mb-6"></div>
+
+              {/* Poem Skeleton Lines */}
+              <div className="space-y-3">
+                <div className="h-4 w-full bg-gray-100 rounded"></div>
+                <div className="h-4 w-5/6 bg-gray-100 rounded"></div>
+                <div className="h-4 w-4/6 bg-gray-100 rounded"></div>
+                <div className="h-4 w-3/4 bg-gray-100 rounded"></div>
+              </div>
+
+              {/* Footer Skeleton */}
+              <div className="mt-6 flex justify-between items-center">
+                <div className="h-6 w-6 bg-gray-200 rounded-full"></div>
+                <div className="h-4 w-20 bg-gray-200 rounded"></div>
+              </div>
+            </div>
+          ))}
+
+          {/* Loading Hint */}
+          <p className="text-center text-sm font-light italic text-gray-500 animate-pulse pt-4">
+            gathering the poems you loved...
+          </p>
         </div>
-
-        {/* Signature Line Skeleton */}
-        <div className="mt-10 h-4 w-28 bg-gray-300 rounded-full mx-auto"></div>
-      </div>
-
-      {/* Loading Hint */}
-      <p className="mt-8 text-sm italic text-gray-600 animate-pulse delay-1000">
-        please wait — getting the poems you liked...
-      </p>
-    </main>
+      </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-white text-gray-900 flex flex-col items-center p-8">
-      <div className="flex justify-between items-center w-full mb-8">
-        <Link
-          href="/poem"
-          aria-label="Go back poems"
-          className="text-sm text-gray-500 hover:text-gray-800 transition-colors duration-200"
-        >
-          ← back to poems
-        </Link>
-      </div>
-      <h1 className="text-4xl font-serif text-center mb-2">liked poems</h1>
-      <p className="text-gray-600 text-center max-w-xl mb-8">
-        bits of emotion you&#39;ve carried, now kept in your heart.
-      </p>
+    <main className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-slate-50 text-gray-900 flex flex-col items-center p-6 sm:p-8">
+      {/* Subtle background decoration */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-100/30 via-transparent to-transparent pointer-events-none"></div>
 
-      <PoemsWrapper poems={poems} />
+      <div className="relative z-10 w-full max-w-6xl">
+        {/* Navigation */}
+        <nav className="flex justify-between items-center w-full mb-12">
+          <Link
+            href="/poem"
+            aria-label="Go back to poems"
+            className="group flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-all duration-300"
+          >
+            <span className="group-hover:-translate-x-1 transition-transform duration-300">
+              ←
+            </span>
+            <span className="font-medium">back to poems</span>
+          </Link>
+        </nav>
+
+        {/* Header */}
+        <header className="text-center mb-12 space-y-4">
+          {/* Decorative line */}
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="h-px w-8 bg-gradient-to-r from-transparent to-gray-300"></div>
+            <div className="w-1 h-1 rounded-full bg-gray-400"></div>
+            <div className="h-px w-8 bg-gradient-to-l from-transparent to-gray-300"></div>
+          </div>
+
+          <h1 className="text-5xl sm:text-6xl font-serif text-gray-900 tracking-tight">
+            liked poems
+          </h1>
+          <p className="text-lg sm:text-xl text-gray-600 font-light italic max-w-2xl mx-auto">
+            bits of emotion you&#39;ve carried, now kept in your heart.
+          </p>
+
+          {/* Decorative line */}
+          <div className="flex items-center justify-center gap-3 mt-6">
+            <div className="h-px w-8 bg-gradient-to-r from-transparent to-gray-300"></div>
+            <div className="w-1 h-1 rounded-full bg-gray-400"></div>
+            <div className="h-px w-8 bg-gradient-to-l from-transparent to-gray-300"></div>
+          </div>
+        </header>
+
+        {/* Poems Content */}
+        <div className="mt-8">
+          <PoemsWrapper poems={poems} />
+        </div>
+      </div>
     </main>
   );
 }

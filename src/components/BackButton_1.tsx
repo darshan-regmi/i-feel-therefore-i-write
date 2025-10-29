@@ -12,9 +12,13 @@ export default function BackButton() {
   return (
     <button
       onClick={handleBack}
-      className="self-start mb-6 text-gray-500 hover:text-gray-800 transition-colors cursor-pointer group"
+      className="group flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-all duration-300 self-start mb-6"
+      aria-label="Go back to liked poems"
     >
-      ← liked poems
+      <span className="group-hover:-translate-x-1 transition-transform duration-300">
+        ←
+      </span>
+      <span>liked poems</span>
     </button>
   )
 }

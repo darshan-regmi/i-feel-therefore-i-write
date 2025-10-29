@@ -33,9 +33,18 @@ build/
 *.tsbuildinfo
 next-env.d.ts
 
-# Environment variables
+# Environment variables (DO NOT COMMIT THESE)
 .env
-.env.*          # .env.local, .env.development, etc.
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+
+# You might want to commit these (but still be careful):
+# .env.development
+# .env.production
+# .env.test
 
 # macOS
 .DS_Store
@@ -59,4 +68,3 @@ src/app/apple-icon.png
 src/app/icon0.svg
 src/app/icon1.png
 src/app/manifest.json
-
