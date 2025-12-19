@@ -1,4 +1,6 @@
 // app/api/sync/route.ts
+// ✅ Simple: Add missing poem IDs only (Node.js runtime - firebase-admin)
+
 import { NextResponse } from 'next/server';
 import { getPoemsFromNotion } from '@/lib/notion';
 import { db } from '@/lib/firebaseAdmin';
@@ -8,116 +10,105 @@ export async function GET() {
 
   try {
     if (!process.env.NOTION_API_KEY) {
-      console.error('❌ NOTION_API_KEY is undefined!');
       return NextResponse.json(
-        { success: false, error: 'Missing NOTION_API_KEY configuration' },
+        { success: false, error: 'Missing NOTION_API_KEY' },
         { status: 500 }
       );
     }
 
-    console.log('🔄 Sync initiated at', new Date().toISOString());
+    console.log('🔄 Simple sync initiated');
 
-    const poems = await getPoemsFromNotion();
-
-    if (!poems || poems.length === 0) {
-      console.warn('⚠️ No poems found in Notion');
+    // Get all Notion poem IDs
+    const notionPoems = await getPoemsFromNotion();
+    if (!notionPoems?.length) {
       return NextResponse.json({
         success: true,
-        message: 'No poems to sync',
-        stats: {
-          total: 0,
-          added: 0,
-          skipped: 0,
-          duration: Date.now() - startTime,
-        },
+        message: 'No poems in Notion',
+        stats: { total: 0, added: 0, duration: Date.now() - startTime }
       });
     }
 
-    console.log(`📚 Found ${poems.length} poems from Notion`);
+    const notionIds = notionPoems.map(poem => poem.id);
+    console.log(`📚 Found ${notionIds.length} Notion poem IDs`);
+
+    // Get all existing Firestore poem IDs
+    const firestoreSnapshot = await db.collection('poems').get();
+    const firestoreIds = firestoreSnapshot.docs.map(doc => doc.id);
+    console.log(`🔍 Found ${firestoreIds.length} Firestore poems`);
+
+    // Find missing poems
+    const missingIds = notionIds.filter(id => !firestoreIds.includes(id));
+    console.log(`➕ Missing poems to add: ${missingIds.length}`);
 
     let addedCount = 0;
-    let skippedCount = 0;
     const errors: string[] = [];
 
+    if (missingIds.length === 0) {
+      return NextResponse.json({
+        success: true,
+        message: 'All poems already exist',
+        stats: {
+          total: notionIds.length,
+          missing: 0,
+          added: 0,
+          duration: Date.now() - startTime
+        }
+      });
+    }
+
+    // Add missing poems in batches
     const batchSize = 500;
+    for (let i = 0; i < missingIds.length; i += batchSize) {
+      const batch = db.batch();
+      const batchIds = missingIds.slice(i, i + batchSize);
 
-    for (let i = 0; i < poems.length; i += batchSize) {
-      const batch = db.batch();  // ✅ db.batch()
-      const batchPoems = poems.slice(i, i + batchSize);
-
-      for (const poem of batchPoems) {
-        try {
-          if (!poem.id) {
-            console.error('❌ Poem missing ID:', poem);
-            errors.push(`Poem "${poem.title || 'unknown'}" is missing an ID`);
-            continue;
-          }
-
-          // ✅ db.collection().doc()
-          const poemRef = db.collection('poems').doc(poem.id);
-          const poemSnap = await poemRef.get();
-
-          if (!poemSnap.exists) {
-            batch.set(poemRef, {
-              id: poem.id,
-              title: poem.title || '',
-              content: poem.content || '',
-              likes: 0,
-              createdAt: new Date().toISOString(),
-              lastSynced: new Date().toISOString(),
-            });
-            addedCount++;
-            console.log(`✨ Queued new poem: ${poem.id} - "${poem.title}"`);
-          } else {
-            batch.update(poemRef, {
-              lastSynced: new Date().toISOString(),
-            });
-            skippedCount++;
-            console.log(`✓ Existing poem: ${poem.id}`);
-          }
-        } catch (error) {
-          const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-          console.error(`❌ Error processing poem ${poem.id}:`, errorMsg);
-          errors.push(`Poem ${poem.id}: ${errorMsg}`);
+      for (const id of batchIds) {
+        const poem = notionPoems.find(p => p.id === id);
+        if (poem) {
+          const poemRef = db.collection('poems').doc(id);
+          batch.set(poemRef, {
+            id: id,
+            title: poem.title || '',
+            content: poem.content || '',
+            likes: 0,
+            createdAt: new Date().toISOString(),
+            lastSynced: new Date().toISOString(),
+          });
         }
       }
 
-      try {
-        await batch.commit();
-        console.log(`💾 Committed batch ${Math.floor(i / batchSize) + 1}`);
-      } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-        console.error('❌ Batch commit failed:', errorMsg);
-        errors.push(`Batch commit failed: ${errorMsg}`);
-      }
+      await batch.commit();
+      addedCount += batchIds.length;
+      console.log(`💾 Added batch ${Math.floor(i / batchSize) + 1}: ${batchIds.length} poems`);
     }
 
     const duration = Date.now() - startTime;
-    const successMessage = `Sync completed: ${addedCount} added, ${skippedCount} existing`;
 
-    console.log(`✅ ${successMessage} (${duration}ms)`);
+    console.log(`✅ Added ${addedCount} missing poems (${duration}ms)`);
 
     return NextResponse.json({
       success: true,
-      message: successMessage,
+      message: `Added ${addedCount} missing poems`,
       stats: {
-        total: poems.length,
+        notionTotal: notionIds.length,
+        firestoreTotal: firestoreIds.length,
+        missing: missingIds.length,
         added: addedCount,
-        skipped: skippedCount,
-        errors: errors.length,
-        duration,
+        duration
       },
-      errors: errors.length > 0 ? errors : undefined,
+      errors: errors.length ? errors : undefined,
     });
 
   } catch (error) {
     const duration = Date.now() - startTime;
-    console.error('❌ [SYNC ERROR]', error);
-
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    console.error('❌ Sync error:', error);
 
     return NextResponse.json(
-      { success: false, error: errorMessage, duration },
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        duration
+      },
       { status: 500 }
     );
   }
