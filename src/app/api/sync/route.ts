@@ -1,16 +1,12 @@
-// Edge runtime (Cloudflare compatible)
-export const runtime = 'edge';
-
+// app/api/sync/route.ts
 import { NextResponse } from 'next/server';
 import { getPoemsFromNotion } from '@/lib/notion';
-import { db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, writeBatch } from 'firebase/firestore';
+import { db } from '@/lib/firebaseAdmin';
 
 export async function GET() {
   const startTime = Date.now();
-  
+
   try {
-    // Validate environment variables
     if (!process.env.NOTION_API_KEY) {
       console.error('❌ NOTION_API_KEY is undefined!');
       return NextResponse.json(
@@ -21,9 +17,8 @@ export async function GET() {
 
     console.log('🔄 Sync initiated at', new Date().toISOString());
 
-    // Fetch poems from Notion
     const poems = await getPoemsFromNotion();
-    
+
     if (!poems || poems.length === 0) {
       console.warn('⚠️ No poems found in Notion');
       return NextResponse.json({
@@ -44,11 +39,10 @@ export async function GET() {
     let skippedCount = 0;
     const errors: string[] = [];
 
-    // Use batch for better performance (max 500 operations per batch)
     const batchSize = 500;
-    
+
     for (let i = 0; i < poems.length; i += batchSize) {
-      const batch = writeBatch(db);
+      const batch = db.batch();  // ✅ db.batch()
       const batchPoems = poems.slice(i, i + batchSize);
 
       for (const poem of batchPoems) {
@@ -59,21 +53,22 @@ export async function GET() {
             continue;
           }
 
-          const poemRef = doc(db, 'poems', poem.id);
-          const poemSnap = await getDoc(poemRef);
+          // ✅ db.collection().doc()
+          const poemRef = db.collection('poems').doc(poem.id);
+          const poemSnap = await poemRef.get();
 
-          if (!poemSnap.exists()) {
-            // Add new poem with initial data
+          if (!poemSnap.exists) {
             batch.set(poemRef, {
-              likes: 0,
+              id: poem.id,
               title: poem.title || '',
+              content: poem.content || '',
+              likes: 0,
               createdAt: new Date().toISOString(),
               lastSynced: new Date().toISOString(),
             });
             addedCount++;
             console.log(`✨ Queued new poem: ${poem.id} - "${poem.title}"`);
           } else {
-            // Update last synced timestamp for existing poems
             batch.update(poemRef, {
               lastSynced: new Date().toISOString(),
             });
@@ -87,7 +82,6 @@ export async function GET() {
         }
       }
 
-      // Commit batch
       try {
         await batch.commit();
         console.log(`💾 Committed batch ${Math.floor(i / batchSize) + 1}`);
@@ -100,7 +94,7 @@ export async function GET() {
 
     const duration = Date.now() - startTime;
     const successMessage = `Sync completed: ${addedCount} added, ${skippedCount} existing`;
-    
+
     console.log(`✅ ${successMessage} (${duration}ms)`);
 
     return NextResponse.json({
@@ -119,22 +113,11 @@ export async function GET() {
   } catch (error) {
     const duration = Date.now() - startTime;
     console.error('❌ [SYNC ERROR]', error);
-    
+
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    const errorStack = error instanceof Error ? error.stack : undefined;
-    
-    console.error('Error details:', {
-      message: errorMessage,
-      stack: errorStack,
-      duration,
-    });
 
     return NextResponse.json(
-      {
-        success: false,
-        error: errorMessage,
-        duration,
-      },
+      { success: false, error: errorMessage, duration },
       { status: 500 }
     );
   }

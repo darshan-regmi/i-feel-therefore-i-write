@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   try {
     // Validate secret token
     const secret = req.nextUrl.searchParams.get('secret');
-    const expectedSecret = process.env.REVALIDATE_SECRET || 'my-secret-key';
+    const expectedSecret = process.env.REVALIDATE_SECRET;
 
     if (!secret || secret !== expectedSecret) {
       console.warn('⚠️ Unauthorized revalidation attempt', {
@@ -29,7 +29,6 @@ export async function GET(req: NextRequest) {
     const pathsToRevalidate = [
       '/poem',           // Main poems list
       '/liked-poem',     // Liked poems page
-      '/',               // Home page (if it shows poem data)
     ];
 
     const revalidationResults = [];
