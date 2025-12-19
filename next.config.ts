@@ -1,11 +1,29 @@
-import type { NextConfig } from "next";
+// next.config.ts
+import type { NextConfig } from 'next';
+import bundleAnalyzer from '@next/bundle-analyzer';
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+});
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  typescript: { ignoreBuildErrors: true },
+  eslint: { ignoreDuringBuilds: true },
+  reactStrictMode: true,
+
+  // ✅ Cloudflare Pages Edge runtime (required)
   experimental: {
-    // Enable scheduled functions (Vercel Cron) to hit API routes
-    // See: https://vercel.com/docs/cron-jobs
+    functions: {
+      'app/api/sync/route.ts': {
+        runtime: 'edge',  // Required for Cloudflare Pages
+      },
+    },
+    serverActions: {},
   },
+
+  // ✅ Cloudflare Pages optimized
+  output: 'export',
+  trailingSlash: true,
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);

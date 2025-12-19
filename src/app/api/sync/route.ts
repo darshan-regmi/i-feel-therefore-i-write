@@ -1,24 +1,22 @@
 // app/api/sync/route.ts
-// ✅ Simple: Add missing poem IDs only (Node.js runtime - firebase-admin)
+export const runtime = 'edge';
 
 import { NextResponse } from 'next/server';
 import { getPoemsFromNotion } from '@/lib/notion';
-import { db } from '@/lib/firebaseAdmin';
 
-export async function GET() {
+export async function GET(request: Request) {
   const startTime = Date.now();
 
   try {
-    if (!process.env.NOTION_API_KEY) {
+    // ✅ Security: Validate sync secret
+    const syncSecret = request.headers.get('syncSecret');
+    if (syncSecret !== process.env.SYNC_SECRET) {
       return NextResponse.json(
-        { success: false, error: 'Missing NOTION_API_KEY' },
-        { status: 500 }
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
       );
     }
 
-    console.log('🔄 Simple sync initiated');
-
-    // Get all Notion poem IDs
     const notionPoems = await getPoemsFromNotion();
     if (!notionPoems?.length) {
       return NextResponse.json({
@@ -29,87 +27,100 @@ export async function GET() {
     }
 
     const notionIds = notionPoems.map(poem => poem.id);
-    console.log(`📚 Found ${notionIds.length} Notion poem IDs`);
+    console.log(`📚 ${notionIds.length} Notion poems`);
 
-    // Get all existing Firestore poem IDs
-    const firestoreSnapshot = await db.collection('poems').get();
-    const firestoreIds = firestoreSnapshot.docs.map(doc => doc.id);
-    console.log(`🔍 Found ${firestoreIds.length} Firestore poems`);
+    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!;
+    const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY!;
+    const firestoreIds = await getAllFirestoreIds(projectId, apiKey);
+    console.log(`🔍 ${firestoreIds.length} Firestore poems`);
 
-    // Find missing poems
     const missingIds = notionIds.filter(id => !firestoreIds.includes(id));
-    console.log(`➕ Missing poems to add: ${missingIds.length}`);
+    console.log(`➕ Adding ${missingIds.length} missing poems`);
 
     let addedCount = 0;
     const errors: string[] = [];
 
-    if (missingIds.length === 0) {
-      return NextResponse.json({
-        success: true,
-        message: 'All poems already exist',
-        stats: {
-          total: notionIds.length,
-          missing: 0,
-          added: 0,
-          duration: Date.now() - startTime
-        }
-      });
-    }
-
-    // Add missing poems in batches
-    const batchSize = 500;
-    for (let i = 0; i < missingIds.length; i += batchSize) {
-      const batch = db.batch();
-      const batchIds = missingIds.slice(i, i + batchSize);
-
-      for (const id of batchIds) {
+    for (const id of missingIds.slice(0, 30)) {
+      try {
         const poem = notionPoems.find(p => p.id === id);
-        if (poem) {
-          const poemRef = db.collection('poems').doc(id);
-          batch.set(poemRef, {
-            id: id,
-            title: poem.title || '',
-            content: poem.content || '',
-            likes: 0,
-            createdAt: new Date().toISOString(),
-            lastSynced: new Date().toISOString(),
-          });
-        }
-      }
+        if (!poem) continue;
 
-      await batch.commit();
-      addedCount += batchIds.length;
-      console.log(`💾 Added batch ${Math.floor(i / batchSize) + 1}: ${batchIds.length} poems`);
+        const docPath = `projects/${projectId}/databases/(default)/documents/poems`;
+        const createUrl = `https://firestore.googleapis.com/v1/${docPath}?documentId=${id}&key=${apiKey}`;
+
+        const poemData = {
+          fields: {
+            id: { stringValue: id },
+            title: { stringValue: poem.title || '' },
+            content: { stringValue: poem.content || '' },
+            likes: { integerValue: '0' },
+            // ✅ No userId - sync poems don't have owner
+            createdAt: { stringValue: new Date().toISOString() },
+            lastSynced: { stringValue: new Date().toISOString() },
+          }
+        };
+
+        // ✅ Include sync secret in headers
+        const response = await fetch(createUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-sync-secret': process.env.SYNC_SECRET!,
+          },
+          body: JSON.stringify(poemData),
+        });
+
+        if (response.ok) {
+          addedCount++;
+          console.log(`✨ Added: ${id}`);
+        } else {
+          const errorText = await response.text();
+          errors.push(`Failed ${id}`);
+        }
+      } catch (error) {
+        errors.push(`Error ${id}`);
+      }
     }
 
     const duration = Date.now() - startTime;
 
-    console.log(`✅ Added ${addedCount} missing poems (${duration}ms)`);
-
     return NextResponse.json({
       success: true,
-      message: `Added ${addedCount} missing poems`,
+      message: `Added ${addedCount}/${missingIds.length} missing poems`,
       stats: {
         notionTotal: notionIds.length,
         firestoreTotal: firestoreIds.length,
         missing: missingIds.length,
         added: addedCount,
-        duration
+        duration,
       },
-      errors: errors.length ? errors : undefined,
+      errors: errors.length ? errors.slice(0, 5) : undefined,
     });
 
   } catch (error) {
-    const duration = Date.now() - startTime;
-    console.error('❌ Sync error:', error);
-
     return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        duration
-      },
+      { success: false, error: String(error) },
       { status: 500 }
     );
   }
+}
+
+async function getAllFirestoreIds(projectId: string, apiKey: string): Promise<string[]> {
+  let allIds: string[] = [];
+  let nextPageToken: string | null = null;
+
+  do {
+    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/poems?pageSize=100${nextPageToken ? `&pageToken=${nextPageToken}` : ''}&key=${apiKey}`;
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.documents) {
+      allIds.push(...data.documents.map((doc: any) => doc.name.split('/').pop()!));
+    }
+
+    nextPageToken = data.nextPageToken || null;
+  } while (nextPageToken);
+
+  return allIds;
 }
