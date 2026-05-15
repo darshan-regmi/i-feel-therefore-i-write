@@ -1,6 +1,9 @@
 {
-  "name": "MyWebSite",
-  "short_name": "MySite",
+  "name": "i feel, therefore i write — Poetry by Darshan Regmi",
+  "short_name": "i feel, i write",
+  "description": "A personal collection of poems by Darshan Regmi exploring love, loss, healing, and self-discovery.",
+  "start_url": "/",
+  "scope": "/",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
@@ -15,7 +18,7 @@
       "purpose": "maskable"
     }
   ],
-  "theme_color": "#ffffff",
+  "theme_color": "#111827",
   "background_color": "#ffffff",
   "display": "standalone"
 }

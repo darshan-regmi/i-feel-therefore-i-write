@@ -26,12 +26,8 @@ export const metadata: Metadata = {
     "A personal collection of poems by Darshan Regmi. For anyone who's ever felt too much, or not enough—verses that echo love, loss, healing, and self-discovery.",
   applicationName: "i feel, therefore i write",
   category: "poetry",
-  generator: "Next.js 14",
   alternates: {
     canonical: "https://poetry.darshanregmi.com.np",
-    languages: {
-      en: "https://poetry.darshanregmi.com.np/en",
-    },
   },
   keywords: [
     // Core poetry topics
@@ -78,16 +74,13 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.json",
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
-    apple: "/favicon.ico",
-    other: [
-      {
-        rel: "mask-icon",
-        url: "/favicon.ico",
-        color: "#000000",
-      },
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon0.svg", type: "image/svg+xml" },
+      { url: "/icon1.png", type: "image/png" },
     ],
+    shortcut: "/favicon.ico",
+    apple: "/apple-icon.png",
   },
   openGraph: {
     title: "Poetry by Darshan Regmi | i feel, therefore i write",
@@ -117,6 +110,44 @@ export const metadata: Metadata = {
   },
 };
 
+const siteJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://poetry.darshanregmi.com.np/#website",
+      url: "https://poetry.darshanregmi.com.np",
+      name: "i feel, therefore i write",
+      description:
+        "A personal collection of poems by Darshan Regmi exploring love, loss, healing, and self-discovery.",
+      inLanguage: "en",
+      publisher: { "@id": "https://poetry.darshanregmi.com.np/#person" },
+      potentialAction: {
+        "@type": "SearchAction",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate:
+            "https://poetry.darshanregmi.com.np/poem?q={search_term_string}",
+        },
+        "query-input": "required name=search_term_string",
+      },
+    },
+    {
+      "@type": "Person",
+      "@id": "https://poetry.darshanregmi.com.np/#person",
+      name: "Darshan Regmi",
+      url: "https://darshanregmi.com.np",
+      image: "https://poetry.darshanregmi.com.np/author.jpg",
+      jobTitle: "Poet",
+      sameAs: [
+        "https://instagram.com/bydarshanregmi",
+        "https://instagram.com/_darshan_regmi",
+        "https://twitter.com/Regmi6Darshan",
+      ],
+    },
+  ],
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -127,6 +158,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}
+        />
         {children}
       </body>
     </html>

@@ -1,70 +1,199 @@
-# Node.js dependencies
+# ============================================================================
+# Dependencies
+# ============================================================================
 node_modules/
+jspm_packages/
 
-# Yarn / pnpm / npm
+# pnpm / yarn berry caches (keep patches/plugins/releases/versions so the team
+# stays on the same toolchain)
 .pnp/
 .pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
+.yarn/cache
+.yarn/install-state.gz
+.yarn/build-state.yml
+.yarn/unplugged
+*.tsbuildinfo
 
-# Testing coverage
-coverage/
+# IMPORTANT: do NOT ignore lockfiles. Committed lockfiles are required for
+# reproducible production builds. Pick ONE based on your package manager and
+# delete the others — never commit two lockfiles in the same repo.
+#
+#   package-lock.json   ← npm   (this project)
+#   yarn.lock           ← yarn
+#   pnpm-lock.yaml      ← pnpm
+#
+# (If you ever want to ignore a stray one, do it locally via .git/info/exclude.)
 
-# Next.js build outputs
+# ============================================================================
+# Next.js build output
+# ============================================================================
 .next/
 out/
 build/
-
-# Firebase emulators / functions (optional)
-.firebase/
-.firebaserc
-*.local.*
-
-# Vercel deployment
-.vercel/
-
-# TypeScript
-*.tsbuildinfo
+dist/
 next-env.d.ts
 
-# Environment variables (DO NOT COMMIT THESE)
+# Bundle analyzer
+analyze/
+.next/analyze/
+
+# ============================================================================
+# Deployment platforms
+# ============================================================================
+
+# Cloudflare Pages / Workers (Wrangler)
+.wrangler/
+.dev.vars
+.dev.vars.*
+worker-configuration.d.ts
+
+# Vercel
+.vercel/
+
+# Netlify
+.netlify/
+
+# ============================================================================
+# Environment variables — NEVER COMMIT SECRETS
+# ============================================================================
 .env
 .env.local
+.env.*.local
 .env.development.local
 .env.test.local
 .env.production.local
-.env*.local
 
-# You might want to commit these (but still be careful):
-# .env.development
-# .env.production
-# .env.test
+# Commit example/template files so contributors know what's required
+!.env.example
+!.env.sample
+!.env.template
 
-# macOS
-.DS_Store
+# ============================================================================
+# Firebase
+# ============================================================================
 
-# Log files
+# Emulator state and debug logs
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+database-debug.log*
+ui-debug.log*
+pubsub-debug.log*
+
+# Admin SDK service account credentials — CRITICAL: never commit these
+serviceAccountKey.json
+service-account*.json
+*-firebase-adminsdk-*.json
+firebase-admin-key*.json
+firebase-adminsdk*.json
+
+# Note: .firebaserc holds the project alias and is typically safe to commit.
+# Uncomment the next line only if your team needs per-developer aliases.
+# .firebaserc
+
+# ============================================================================
+# Logs
+# ============================================================================
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+lerna-debug.log*
+.pnpm-debug.log*
 
-# Editor config
-.vscode/
+# ============================================================================
+# Testing / coverage
+# ============================================================================
+coverage/
+*.lcov
+.nyc_output/
+test-results/
+playwright-report/
+playwright/.cache/
+
+# ============================================================================
+# Tooling caches
+# ============================================================================
+.eslintcache
+.stylelintcache
+.cache/
+.parcel-cache/
+.turbo/
+.swc/
+.npm/
+.node_repl_history
+*.pid
+*.seed
+*.pid.lock
+
+# ============================================================================
+# TypeScript
+# ============================================================================
+*.tsbuildinfo
+
+# ============================================================================
+# Observability / error tracking
+# ============================================================================
+.sentryclirc
+
+# ============================================================================
+# IDE / editor
+# ============================================================================
+
+# VS Code — ignore user-local files but allow shared workspace config
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+.vscode-test/
+
+# JetBrains
 .idea/
+*.iml
+*.iws
 
-# Qodo or custom tools
+# Other editors
+.zed/
+.fleet/
+.history/
+*.swp
+*.swo
+*~
+
+# ============================================================================
+# OS-specific
+# ============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+.directory
+.Trash-*
+
+# ============================================================================
+# Temporary / misc
+# ============================================================================
+tmp/
+temp/
+*.tmp
+*.bak
+*.orig
 .qodo/
-
-# Ignore any favicon or static icon duplicates inside `src/app`
-src/app/favicon.ico
-src/app/apple-icon.png
-src/app/icon0.svg
-src/app/icon1.png
-src/app/manifest.json

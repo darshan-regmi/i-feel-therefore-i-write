@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import SearchBar from "./SearchBar";
-import { useRouter } from "next/navigation";
-import { auth } from "@/lib/firebase";
 
 const LikeButton = dynamic(() => import("@/components/LikeButton"), {
   ssr: false,
@@ -24,11 +23,31 @@ type Props = { poems: Poem[] };
 export default function PoemsClient({ poems }: Props) {
   const [filtered, setFiltered] = useState<Poem[]>(poems);
 
-  const router = useRouter();
+  // Restore scroll position when returning from a poem detail page
+  useEffect(() => {
+    try {
+      const savedScroll = sessionStorage.getItem("poems-scroll");
+      if (savedScroll) {
+        const scrollPosition = parseInt(savedScroll, 10);
+        if (!isNaN(scrollPosition) && scrollPosition >= 0) {
+          requestAnimationFrame(() => {
+            window.scrollTo({ top: scrollPosition, behavior: "instant" });
+          });
+        }
+        sessionStorage.removeItem("poems-scroll");
+      }
+    } catch (error) {
+      console.error("Error restoring scroll position:", error);
+      sessionStorage.removeItem("poems-scroll");
+    }
+  }, []);
 
-  const handleClick = (id: string) => {
-    sessionStorage.setItem("poems-scroll", String(window.scrollY));
-    router.push(`/poem/${id}`);
+  const saveScroll = () => {
+    try {
+      sessionStorage.setItem("poems-scroll", String(window.scrollY));
+    } catch {
+      // ignore
+    }
   };
 
   return (
@@ -65,19 +84,19 @@ export default function PoemsClient({ poems }: Props) {
               style={{ animationDelay: `${index * 50}ms` }}
             >
               <article className="group relative p-6 sm:p-8 bg-white rounded-2xl border border-gray-200 hover:border-gray-300 shadow-sm hover:shadow-lg transition-all duration-300">
-                {/* Subtle gradient overlay on hover */}
                 <div className="absolute inset-0 bg-gradient-to-br from-gray-50/50 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
-                <div
-                  onClick={() => handleClick(poem.id)}
-                  className="cursor-pointer relative z-10"
+                <Link
+                  href={`/poem/${poem.id}`}
+                  onMouseDown={saveScroll}
+                  onTouchStart={saveScroll}
+                  className="relative z-10 block"
+                  aria-label={`Read full poem: ${poem.title}`}
                 >
-                  {/* Title */}
                   <h2 className="text-2xl sm:text-3xl font-serif mb-4 text-gray-900 group-hover:text-black transition-colors duration-200">
                     {poem.title}
                   </h2>
 
-                  {/* Content preview */}
                   <div className="relative">
                     <div className="relative max-h-[9.5rem] sm:max-h-[11rem] md:max-h-[13rem] overflow-hidden">
                       <p className="whitespace-pre-line break-words text-sm sm:text-base text-gray-700 leading-relaxed">
@@ -86,20 +105,17 @@ export default function PoemsClient({ poems }: Props) {
                         &rdquo;
                       </p>
                     </div>
-                    {/* Gradient fade effect */}
                     <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white to-transparent pointer-events-none" />
                   </div>
-                </div>
+                </Link>
 
-                {/* Footer */}
                 <div className="mt-6 flex items-center justify-between relative z-10">
-                  <LikeButton
-                    key={`${poem.id}-${auth.currentUser?.uid}`}
-                    poemId={poem.id}
-                  />
-                  <button
+                  <LikeButton poemId={poem.id} />
+                  <Link
+                    href={`/poem/${poem.id}`}
+                    onMouseDown={saveScroll}
+                    onTouchStart={saveScroll}
                     className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors duration-200 group/btn"
-                    onClick={() => handleClick(poem.id)}
                     aria-label={`Read full poem: ${poem.title}`}
                   >
                     <span>Read more</span>
@@ -116,7 +132,7 @@ export default function PoemsClient({ poems }: Props) {
                         d="M17 8l4 4m0 0l-4 4m4-4H3"
                       />
                     </svg>
-                  </button>
+                  </Link>
                 </div>
               </article>
             </li>

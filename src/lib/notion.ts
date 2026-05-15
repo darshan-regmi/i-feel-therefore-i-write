@@ -25,6 +25,9 @@ export interface Poem {
   id: string;
   title: string;
   content: string;
+  description: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Cache configuration
@@ -94,10 +97,29 @@ function extractPoemFromPage(page: PageObjectResponse): Poem {
         ? page.properties.Content.rich_text[0].plain_text
         : '(No content)';
 
+    // Optional hand-written meta description. Notion property name: "Description"
+    // (rich_text). Falls back to null so callers can substring `content` instead.
+    const descriptionProp =
+      page.properties.Description?.type === 'rich_text' &&
+      page.properties.Description.rich_text.length > 0
+        ? page.properties.Description.rich_text
+            .map((t) => t.plain_text)
+            .join('')
+            .trim()
+        : null;
+
+    const createdAtProp =
+      page.properties.CreatedAt?.type === 'created_time'
+        ? page.properties.CreatedAt.created_time
+        : undefined;
+
     return {
       id: page.id,
       title: title.trim(),
       content: content.trim(),
+      description: descriptionProp && descriptionProp.length > 0 ? descriptionProp : null,
+      createdAt: createdAtProp ?? page.created_time,
+      updatedAt: page.last_edited_time,
     };
   } catch (error) {
     console.error(`❌ Error extracting poem from page ${page.id}:`, error);
@@ -105,6 +127,9 @@ function extractPoemFromPage(page: PageObjectResponse): Poem {
       id: page.id,
       title: 'Error Loading Title',
       content: 'Error loading content',
+      description: null,
+      createdAt: page.created_time,
+      updatedAt: page.last_edited_time,
     };
   }
 }

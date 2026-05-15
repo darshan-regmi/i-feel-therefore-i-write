@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: "About the Author",
   description:
     "Learn more about Darshan Regmi, the poet behind i feel, therefore i write. Discover his journey, inspirations, and current projects.",
+  alternates: {
+    canonical: "https://poetry.darshanregmi.com.np/about-the-author",
+  },
   openGraph: {
     title: "About the Author",
     description:
@@ -45,9 +48,9 @@ const AboutTheAuthor: React.FC = () => {
         </Link>
 
         <section className="w-full max-w-6xl mx-auto py-8 sm:py-12">
-          <h2 className="text-4xl sm:text-5xl font-bold mb-12 text-center bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl sm:text-5xl font-bold mb-12 text-center bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
             About the Author
-          </h2>
+          </h1>
 
           <div className="flex flex-col md:flex-row items-center md:items-start gap-12 md:gap-16">
             {/* Enhanced Image with gradient border */}

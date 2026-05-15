@@ -1,8 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import LikeButton from "@/components/LikeButton";
-import { auth } from "@/lib/firebase";
+import LikeButton from "@/components/LikeButtonLazy";
 
 const poem = {
   id: "doorway", // unique ID for this poem
@@ -67,10 +66,7 @@ export default function DoorwayPoem() {
           {poem.content}
           <br />
           <br />
-          <LikeButton
-            key={`${poem.id}-${auth.currentUser?.uid}`}
-            poemId={poem.id}
-          />
+          <LikeButton poemId={poem.id} />
         </div>
       </article>
     </main>
