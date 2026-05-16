@@ -10,20 +10,28 @@ import { getFirestore, Firestore } from "firebase/firestore";
 import { getStorage, FirebaseStorage } from "firebase/storage";
 import { onAuthStateChanged } from "firebase/auth";
 
-// Firebase configuration with fallback values
+// NEXT_PUBLIC_* vars must be referenced statically so Next.js can inline them
+// into the client bundle at build time. Dynamic lookups (e.g. process.env[name])
+// are not replaced, which is why a helper function won't work here.
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyDPTPNoo6HpU7LZeUj-XRWGgIoFZNwHkes",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "i-feel-therefore-i-write.firebaseapp.com",
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "i-feel-therefore-i-write",
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "i-feel-therefore-i-write.firebasestorage.app",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "944118167142",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:944118167142:web:188d900e91dc3a7fe2dfa7",
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-Z8FP693QGW",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Warn in development if using fallback values
-if (process.env.NODE_ENV === 'development' && !process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
-  console.warn('⚠️ Using hardcoded Firebase config. For production, please set environment variables.');
+const missing = (
+  ["apiKey", "authDomain", "projectId", "storageBucket", "messagingSenderId", "appId"] as const
+).filter((k) => !firebaseConfig[k]);
+if (missing.length > 0) {
+  throw new Error(
+    `Missing required Firebase env vars: ${missing
+      .map((k) => `NEXT_PUBLIC_FIREBASE_${k.replace(/[A-Z]/g, (c) => `_${c}`).toUpperCase()}`)
+      .join(", ")}. See .env.example.`
+  );
 }
 
 // Initialize Firebase (prevent multiple initializations)

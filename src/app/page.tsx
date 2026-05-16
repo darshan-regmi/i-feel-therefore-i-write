@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "i feel, therefore i write | Poetry Collection by Darshan Regmi",
@@ -17,19 +18,19 @@ export const metadata: Metadata = {
     "contemporary poetry",
   ],
   alternates: {
-    canonical: "https://poetry.darshanregmi.com.np",
+    canonical: SITE_URL,
   },
   openGraph: {
     title: "i feel, therefore i write | Poetry Collection by Darshan Regmi",
     description:
       "Explore heartfelt poems by Darshan Regmi. A modern collection that touches on love, emotion, healing, and self-expression.",
-    url: "https://poetry.darshanregmi.com.np",
+    url: SITE_URL,
     siteName: "i feel, therefore i write",
     locale: "en_US",
     type: "website",
     images: [
       {
-        url: "https://poetry.darshanregmi.com.np/default-og-image.png",
+        url: `${SITE_URL}/default-og-image.png`,
         width: 1200,
         height: 630,
         alt: "i feel, therefore i write | Poetry Collection by Darshan Regmi",
@@ -43,7 +44,7 @@ export const metadata: Metadata = {
       "Dive into original, emotional poetry by Darshan Regmi. A modern collection about love, healing, and self-expression.",
     site: "@Regmi6Darshan",
     creator: "@Regmi6Darshan",
-    images: ["https://poetry.darshanregmi.com.np/default-og-image.png"],
+    images: [`${SITE_URL}/default-og-image.png`],
   },
 };
 

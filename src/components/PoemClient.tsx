@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import SearchBar from "./SearchBar";
+import { LikedPoemsProvider } from "./LikedPoemsProvider";
 
 const LikeButton = dynamic(() => import("@/components/LikeButton"), {
   ssr: false,
@@ -18,10 +19,46 @@ type Poem = {
   content: string;
 };
 
-type Props = { poems: Poem[] };
+type Props = { poems: Poem[]; initialLikes?: Record<string, number> };
 
-export default function PoemsClient({ poems }: Props) {
+const PAGE_SIZE = 100;
+
+export default function PoemsClient({ poems, initialLikes }: Props) {
   const [filtered, setFiltered] = useState<Poem[]>(poems);
+  const [query, setQuery] = useState("");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  // Reset pagination only when the underlying dataset changes — clearing a
+  // search keeps whatever the user had already revealed so their scroll
+  // position stays meaningful.
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [poems]);
+
+  const isSearching = query.trim() !== "";
+  const visible = isSearching ? filtered : filtered.slice(0, visibleCount);
+  const hasMore = !isSearching && visibleCount < filtered.length;
+
+  // IntersectionObserver loads the next page when the sentinel scrolls into view.
+  useEffect(() => {
+    if (!hasMore) return;
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, filtered.length));
+        }
+      },
+      { rootMargin: "400px 0px" }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, filtered.length]);
+
+  const handleQueryChange = useCallback((q: string) => setQuery(q), []);
 
   // Restore scroll position when returning from a poem detail page
   useEffect(() => {
@@ -51,8 +88,13 @@ export default function PoemsClient({ poems }: Props) {
   };
 
   return (
+    <LikedPoemsProvider>
     <div className="w-full flex flex-col items-center">
-      <SearchBar poems={poems} onResults={setFiltered} />
+      <SearchBar
+        poems={poems}
+        onResults={setFiltered}
+        onQueryChange={handleQueryChange}
+      />
 
       {filtered.length === 0 ? (
         <div className="w-full max-w-2xl px-4 py-16 text-center">
@@ -77,11 +119,11 @@ export default function PoemsClient({ poems }: Props) {
         </div>
       ) : (
         <ul className="w-full max-w-3xl space-y-6 px-4">
-          {filtered.map((poem, index) => (
+          {visible.map((poem, index) => (
             <li
               key={poem.id}
               className="animate-fade-in"
-              style={{ animationDelay: `${index * 50}ms` }}
+              style={{ animationDelay: `${Math.min(index, 10) * 50}ms` }}
             >
               <article className="group relative p-6 sm:p-8 bg-white rounded-2xl border border-gray-200 hover:border-gray-300 shadow-sm hover:shadow-lg transition-all duration-300">
                 <div className="absolute inset-0 bg-gradient-to-br from-gray-50/50 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
@@ -110,7 +152,10 @@ export default function PoemsClient({ poems }: Props) {
                 </Link>
 
                 <div className="mt-6 flex items-center justify-between relative z-10">
-                  <LikeButton poemId={poem.id} />
+                  <LikeButton
+                    poemId={poem.id}
+                    initialLikes={initialLikes?.[poem.id] ?? 0}
+                  />
                   <Link
                     href={`/poem/${poem.id}`}
                     onMouseDown={saveScroll}
@@ -140,6 +185,19 @@ export default function PoemsClient({ poems }: Props) {
         </ul>
       )}
 
+      {hasMore && (
+        <div
+          ref={sentinelRef}
+          aria-hidden="true"
+          className="w-full max-w-3xl px-4 py-8 flex justify-center"
+        >
+          <div className="flex items-center gap-2 text-sm text-gray-400">
+            <div className="w-2 h-2 rounded-full bg-gray-300 animate-pulse" />
+            <span>loading more poems…</span>
+          </div>
+        </div>
+      )}
+
       <style jsx>{`
         @keyframes fade-in {
           from {
@@ -157,5 +215,6 @@ export default function PoemsClient({ poems }: Props) {
         }
       `}</style>
     </div>
+    </LikedPoemsProvider>
   );
 }

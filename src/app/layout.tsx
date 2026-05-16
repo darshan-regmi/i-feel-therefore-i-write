@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,7 +18,7 @@ export const viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://poetry.darshanregmi.com.np"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "Poetry by Darshan Regmi | i feel, therefore i write",
     template: "%s | i feel, therefore i write",
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
   applicationName: "i feel, therefore i write",
   category: "poetry",
   alternates: {
-    canonical: "https://poetry.darshanregmi.com.np",
+    canonical: SITE_URL,
   },
   keywords: [
     // Core poetry topics
@@ -86,11 +87,11 @@ export const metadata: Metadata = {
     title: "Poetry by Darshan Regmi | i feel, therefore i write",
     description:
       "A soulful archive of poems by Darshan Regmi. Explore verses on love, longing, healing, and the beautiful ache of being human.",
-    url: "https://poetry.darshanregmi.com.np",
+    url: SITE_URL,
     siteName: "i feel, therefore i write",
     images: [
       {
-        url: "https://poetry.darshanregmi.com.np/default-og-image.png",
+        url: `${SITE_URL}/default-og-image.png`,
         width: 1200,
         height: 630,
         alt: "Poetry by Darshan Regmi – i feel, therefore i write",
@@ -106,7 +107,7 @@ export const metadata: Metadata = {
       "A personal poetry collection exploring emotion, reflection, and vulnerability. Written by Darshan Regmi.",
     site: "@Regmi6Darshan",
     creator: "@Regmi6Darshan",
-    images: ["https://poetry.darshanregmi.com.np/default-og-image.png"],
+    images: [`${SITE_URL}/default-og-image.png`],
   },
 };
 
@@ -115,29 +116,28 @@ const siteJsonLd = {
   "@graph": [
     {
       "@type": "WebSite",
-      "@id": "https://poetry.darshanregmi.com.np/#website",
-      url: "https://poetry.darshanregmi.com.np",
+      "@id": `${SITE_URL}/#website`,
+      url: SITE_URL,
       name: "i feel, therefore i write",
       description:
         "A personal collection of poems by Darshan Regmi exploring love, loss, healing, and self-discovery.",
       inLanguage: "en",
-      publisher: { "@id": "https://poetry.darshanregmi.com.np/#person" },
+      publisher: { "@id": `${SITE_URL}/#person` },
       potentialAction: {
         "@type": "SearchAction",
         target: {
           "@type": "EntryPoint",
-          urlTemplate:
-            "https://poetry.darshanregmi.com.np/poem?q={search_term_string}",
+          urlTemplate: `${SITE_URL}/poem?q={search_term_string}`,
         },
         "query-input": "required name=search_term_string",
       },
     },
     {
       "@type": "Person",
-      "@id": "https://poetry.darshanregmi.com.np/#person",
+      "@id": `${SITE_URL}/#person`,
       name: "Darshan Regmi",
       url: "https://darshanregmi.com.np",
-      image: "https://poetry.darshanregmi.com.np/author.jpg",
+      image: `${SITE_URL}/author.jpg`,
       jobTitle: "Poet",
       sameAs: [
         "https://instagram.com/bydarshanregmi",

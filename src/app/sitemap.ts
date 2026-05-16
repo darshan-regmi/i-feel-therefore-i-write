@@ -1,9 +1,8 @@
 import type { MetadataRoute } from "next";
 import { getPoemsFromNotion } from "@/lib/notion";
+import { SITE_URL } from "@/lib/site";
 
 export const revalidate = 3600; // refresh hourly
-
-const SITE_URL = "https://poetry.darshanregmi.com.np";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();

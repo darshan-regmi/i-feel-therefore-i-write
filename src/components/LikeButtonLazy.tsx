@@ -14,6 +14,12 @@ const LikeButton = dynamic(() => import("./LikeButton"), {
   ),
 });
 
-export default function LikeButtonLazy({ poemId }: { poemId: string }) {
-  return <LikeButton poemId={poemId} />;
+export default function LikeButtonLazy({
+  poemId,
+  initialLikes,
+}: {
+  poemId: string;
+  initialLikes?: number;
+}) {
+  return <LikeButton poemId={poemId} initialLikes={initialLikes} />;
 }

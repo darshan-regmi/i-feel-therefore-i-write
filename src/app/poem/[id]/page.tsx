@@ -4,18 +4,23 @@ export const runtime = 'edge';
 import { Metadata } from "next";
 import Link from "next/link";
 import { getPoemById, getPoemsFromNotion, type Poem } from "@/lib/notion";
+import { getAllPoemLikes } from "@/lib/poemLikes";
+import { SITE_URL } from "@/lib/site";
 import { notFound } from "next/navigation";
 import BackButtonWithScroll from "@/components/BackButton";
 import LikeButton from "@/components/LikeButtonLazy";
-
-const SITE_URL = "https://poetry.darshanregmi.com.np";
 
 export async function generateMetadata({
   params,
 }: {
   params: { id: string };
 }): Promise<Metadata> {
-  const poem = await getPoemById(params.id);
+  let poem: Poem | null = null;
+  try {
+    poem = await getPoemById(params.id);
+  } catch {
+    poem = null;
+  }
 
   if (!poem) {
     return {
@@ -69,20 +74,26 @@ export async function generateMetadata({
 }
 
 export default async function PoemPage({ params }: { params: { id: string } }) {
-  const poem: Poem | null = await getPoemById(params.id);
+  let poem: Poem | null = null;
+  try {
+    poem = await getPoemById(params.id);
+  } catch {
+    poem = null;
+  }
 
   if (!poem) {
     notFound();
   }
 
-  // Sibling poems for internal linking (improves crawl depth)
-  let related: Poem[] = [];
-  try {
-    const all = await getPoemsFromNotion();
-    related = all.filter((p) => p.id !== poem.id).slice(0, 3);
-  } catch {
-    related = [];
-  }
+  // Sibling poems for internal linking (improves crawl depth) and the cached
+  // like-count map so the heart button hydrates without a Firestore round-trip.
+  const [related, likesMap] = await Promise.all([
+    getPoemsFromNotion()
+      .then((all) => all.filter((p) => p.id !== poem.id).slice(0, 3))
+      .catch(() => [] as Poem[]),
+    getAllPoemLikes().catch(() => ({} as Record<string, number>)),
+  ]);
+  const initialLikes = likesMap[poem.id] ?? 0;
 
   const pageUrl = `${SITE_URL}/poem/${poem.id}`;
 
@@ -162,7 +173,7 @@ export default async function PoemPage({ params }: { params: { id: string } }) {
               </div>
 
               <div className="mt-10 pt-6 border-t border-gray-200 flex items-center justify-between">
-                <LikeButton poemId={poem.id} />
+                <LikeButton poemId={poem.id} initialLikes={initialLikes} />
                 <Link
                   href="/about-the-author"
                   rel="author"

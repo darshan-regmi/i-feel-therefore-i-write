@@ -2,7 +2,7 @@
 
 export default function Loading() {
   return (
-    <main className="min-h-screen bg-white text-black flex flex-col items-center justify-center px-6 py-12">
+    <div role="status" aria-label="Loading poem" className="min-h-screen bg-white text-black flex flex-col items-center justify-center px-6 py-12">
       <div className="w-full max-w-2xl p-8 rounded-xl shadow-sm border border-gray-200 animate-pulse bg-white">
         
         {/* Title Skeleton */}
@@ -26,6 +26,6 @@ export default function Loading() {
       <p className="mt-8 text-sm italic text-gray-500 animate-pulse delay-1000">
         a verse is unfolding...
       </p>
-    </main>
+    </div>
   );
 }

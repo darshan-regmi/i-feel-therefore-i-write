@@ -1,13 +1,13 @@
-export const revalidate = 60;
+export const revalidate = 300;
 export const runtime = "edge";
 
 import type { Metadata } from "next";
 import Link from "next/link";
 import PoemsClient from "@/components/PoemClient";
 import { getPoemsFromNotion } from "@/lib/notion";
+import { getAllPoemLikes } from "@/lib/poemLikes";
+import { SITE_URL } from "@/lib/site";
 import { FaHeart } from "react-icons/fa";
-
-const SITE_URL = "https://poetry.darshanregmi.com.np";
 
 export const metadata: Metadata = {
   title: "Poems by Darshan Regmi",
@@ -57,10 +57,18 @@ export const metadata: Metadata = {
 
 export default async function PoemsPage() {
   let poems: Awaited<ReturnType<typeof getPoemsFromNotion>> = [];
+  let initialLikes: Record<string, number> = {};
   let fetchError = false;
 
   try {
-    poems = await getPoemsFromNotion();
+    // Notion fetch is the critical path; like counts run in parallel and we
+    // accept an empty map if their backend hiccups.
+    const [poemsResult, likesResult] = await Promise.all([
+      getPoemsFromNotion(),
+      getAllPoemLikes().catch(() => ({})),
+    ]);
+    poems = poemsResult;
+    initialLikes = likesResult;
   } catch (error) {
     console.error("Failed to load poems for /poem:", error);
     fetchError = true;
@@ -196,7 +204,7 @@ export default async function PoemsPage() {
         </noscript>
 
         <div className="mt-8">
-          <PoemsClient poems={poems} />
+          <PoemsClient poems={poems} initialLikes={initialLikes} />
         </div>
       </div>
     </main>

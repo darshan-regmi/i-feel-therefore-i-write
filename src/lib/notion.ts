@@ -4,21 +4,20 @@ import {
   PageObjectResponse,
   QueryDatabaseResponse,
 } from '@notionhq/client/build/src/api-endpoints';
+import { unstable_cache } from 'next/cache';
 
-// Validate environment variables
 if (!process.env.NOTION_API_KEY) {
-  throw new Error('NOTION_API_KEY is not defined in environment variables');
+  throw new Error('Missing required environment variable: NOTION_API_KEY. See .env.example.');
 }
-
 if (!process.env.NOTION_DATABASE_ID) {
-  console.warn('⚠️ NOTION_DATABASE_ID not set, using fallback');
+  throw new Error('Missing required environment variable: NOTION_DATABASE_ID. See .env.example.');
 }
 
 const notion = new Client({
   auth: process.env.NOTION_API_KEY,
 });
 
-const databaseId = process.env.NOTION_DATABASE_ID || '209419347bda80089684fc2ae3e15149';
+const databaseId = process.env.NOTION_DATABASE_ID;
 
 // Types
 export interface Poem {
@@ -134,10 +133,7 @@ function extractPoemFromPage(page: PageObjectResponse): Poem {
   }
 }
 
-/**
- * Fetch all published poems. Sorted in descending order by CreatedAt.
- */
-export async function getPoemsFromNotion(): Promise<Poem[]> {
+async function fetchPoemsFromNotion(): Promise<Poem[]> {
   try {
     console.log('📚 Fetching all poems from Notion...');
     const startTime = Date.now();
@@ -171,23 +167,37 @@ export async function getPoemsFromNotion(): Promise<Poem[]> {
 }
 
 /**
- * Retrieve a single poem by page ID with caching.
+ * Fetch all published poems, cached across requests via Next's data cache.
+ * Revalidates every 5 minutes. Bust manually by hitting POST /api/revalidate
+ * (which calls revalidatePath('/poem') and /poem/[id]).
+ */
+export const getPoemsFromNotion = unstable_cache(
+  fetchPoemsFromNotion,
+  ['all-published-poems'],
+  { revalidate: 300, tags: ['poems'] }
+);
+
+// Notion page IDs are 32 hex chars, optionally formatted as 8-4-4-4-12 UUID.
+const NOTION_ID_RE = /^[0-9a-f]{32}$|^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Retrieve a single poem by page ID with caching. Returns null for any
+ * fetch failure (invalid ID, network error, Notion 404) so callers can
+ * cleanly fall through to `notFound()` without crashing the stream.
  */
 export async function getPoemById(id: string): Promise<Poem | null> {
+  if (!id || typeof id !== 'string' || !NOTION_ID_RE.test(id.trim())) {
+    console.warn(`⚠️ Invalid Notion page ID shape: ${id}`);
+    return null;
+  }
+
+  const cached = poemCache.get(id);
+  if (cached && isCacheValid(cached.timestamp)) {
+    console.log(`💾 Cache hit for poem: ${id}`);
+    return cached.poem;
+  }
+
   try {
-    // Validate ID
-    if (!id || typeof id !== 'string' || id.trim() === '') {
-      console.error('❌ Invalid poem ID provided:', id);
-      return null;
-    }
-
-    // Check cache
-    const cached = poemCache.get(id);
-    if (cached && isCacheValid(cached.timestamp)) {
-      console.log(`💾 Cache hit for poem: ${id}`);
-      return cached.poem;
-    }
-
     console.log(`📖 Fetching poem from Notion: ${id}`);
     const startTime = Date.now();
 
@@ -195,7 +205,6 @@ export async function getPoemById(id: string): Promise<Poem | null> {
       page_id: id,
     })) as PageObjectResponse;
 
-    // Check if page has the required properties
     if (!page.properties.Title || !page.properties.Content) {
       console.error(`❌ Poem ${id} missing required properties`);
       return null;
@@ -204,7 +213,6 @@ export async function getPoemById(id: string): Promise<Poem | null> {
     const poem = extractPoemFromPage(page);
     const duration = Date.now() - startTime;
 
-    // Cache the result
     poemCache.set(id, {
       poem,
       timestamp: Date.now(),
@@ -213,17 +221,8 @@ export async function getPoemById(id: string): Promise<Poem | null> {
     console.log(`✅ Fetched poem: ${id} - "${poem.title}" (${duration}ms)`);
     return poem;
   } catch (error) {
-    console.error(`❌ Error fetching poem ${id}:`, error);
-    
-    // Check if it's a not found error
-    if (error instanceof Error && error.message.includes('Could not find page')) {
-      console.warn(`⚠️ Poem not found: ${id}`);
-      return null;
-    }
-
-    throw new Error(
-      `Failed to fetch poem: ${error instanceof Error ? error.message : 'Unknown error'}`
-    );
+    console.warn(`⚠️ Poem fetch failed for ${id}:`, error);
+    return null;
   }
 }
 

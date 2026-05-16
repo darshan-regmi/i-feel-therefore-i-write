@@ -13,13 +13,15 @@ type Poem = {
 type SearchBarProps = {
   poems: Poem[]
   onResults: (results: Poem[]) => void
+  onQueryChange?: (query: string) => void
 }
 
-export default function SearchBar({ poems, onResults }: SearchBarProps) {
+export default function SearchBar({ poems, onResults, onQueryChange }: SearchBarProps) {
   const [query, setQuery] = useState('')
   const [resultCount, setResultCount] = useState(poems.length)
 
   useEffect(() => {
+    onQueryChange?.(query)
     if (!query) {
       onResults(poems)
       setResultCount(poems.length)
@@ -32,7 +34,7 @@ export default function SearchBar({ poems, onResults }: SearchBarProps) {
       onResults(matches)
       setResultCount(matches.length)
     }
-  }, [query, poems, onResults])
+  }, [query, poems, onResults, onQueryChange])
 
   return (
     <div className="w-full max-w-2xl mb-8 space-y-3">

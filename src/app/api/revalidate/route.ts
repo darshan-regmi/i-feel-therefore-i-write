@@ -1,7 +1,13 @@
 export const runtime = 'edge';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
+
+// Cache tags used by unstable_cache wrappers around poems + like counts.
+// Keep this list in sync with the `tags` option in:
+//   - src/lib/notion.ts        (tag: "poems")
+//   - src/lib/poemLikes.ts     (tag: "poem-likes")
+const CACHE_TAGS = ['poems', 'poem-likes'] as const;
 
 export async function GET(req: NextRequest) {
   const startTime = Date.now();
@@ -25,37 +31,60 @@ export async function GET(req: NextRequest) {
 
     console.log('🔄 Revalidation started at', new Date().toISOString());
 
-    // Revalidate all relevant paths
-    const pathsToRevalidate = [
-      '/poem',           // Main poems list
-      '/liked-poem',     // Liked poems page
-    ];
+    // Allow narrow invalidation via ?tag=poem-likes (repeatable). When omitted,
+    // bust everything we know about.
+    const requestedTags = req.nextUrl.searchParams.getAll('tag');
+    const tagsToRevalidate =
+      requestedTags.length > 0
+        ? requestedTags.filter((t): t is (typeof CACHE_TAGS)[number] =>
+            (CACHE_TAGS as readonly string[]).includes(t)
+          )
+        : [...CACHE_TAGS];
 
-    const revalidationResults = [];
+    const pathsToRevalidate = ['/poem', '/liked-poem'];
+
+    const revalidationResults: Array<
+      { kind: 'path' | 'tag'; name: string; status: 'success' | 'failed'; error?: string }
+    > = [];
 
     for (const path of pathsToRevalidate) {
       try {
         revalidatePath(path);
-        revalidationResults.push({ path, status: 'success' });
-        console.log(`✅ Revalidated: ${path}`);
+        revalidationResults.push({ kind: 'path', name: path, status: 'success' });
+        console.log(`✅ Revalidated path: ${path}`);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-        revalidationResults.push({ path, status: 'failed', error: errorMsg });
-        console.error(`❌ Failed to revalidate ${path}:`, errorMsg);
+        revalidationResults.push({ kind: 'path', name: path, status: 'failed', error: errorMsg });
+        console.error(`❌ Failed to revalidate path ${path}:`, errorMsg);
+      }
+    }
+
+    for (const tag of tagsToRevalidate) {
+      try {
+        revalidateTag(tag);
+        revalidationResults.push({ kind: 'tag', name: tag, status: 'success' });
+        console.log(`✅ Revalidated tag: ${tag}`);
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        revalidationResults.push({ kind: 'tag', name: tag, status: 'failed', error: errorMsg });
+        console.error(`❌ Failed to revalidate tag ${tag}:`, errorMsg);
       }
     }
 
     const duration = Date.now() - startTime;
-    const successCount = revalidationResults.filter(r => r.status === 'success').length;
-    const failedCount = revalidationResults.filter(r => r.status === 'failed').length;
+    const successCount = revalidationResults.filter((r) => r.status === 'success').length;
+    const failedCount = revalidationResults.filter((r) => r.status === 'failed').length;
 
-    console.log(`✅ Revalidation completed: ${successCount} succeeded, ${failedCount} failed (${duration}ms)`);
+    console.log(
+      `✅ Revalidation completed: ${successCount} succeeded, ${failedCount} failed (${duration}ms)`
+    );
 
     return NextResponse.json({
       success: true,
       message: 'Revalidation triggered successfully',
       stats: {
-        total: pathsToRevalidate.length,
+        paths: pathsToRevalidate.length,
+        tags: tagsToRevalidate.length,
         succeeded: successCount,
         failed: failedCount,
         duration,

@@ -3,22 +3,23 @@ import Image from "next/image";
 import Link from "next/link";
 import Footer from "@/components/Footer";
 import type { Metadata } from "next";
+import { SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "About the Author",
   description:
     "Learn more about Darshan Regmi, the poet behind i feel, therefore i write. Discover his journey, inspirations, and current projects.",
   alternates: {
-    canonical: "https://poetry.darshanregmi.com.np/about-the-author",
+    canonical: `${SITE_URL}/about-the-author`,
   },
   openGraph: {
     title: "About the Author",
     description:
       "Learn more about Darshan Regmi, the poet behind i feel, therefore i write. Discover his journey, inspirations, and current projects.",
-    url: "https://poetry.darshanregmi.com.np/about-the-author",
+    url: `${SITE_URL}/about-the-author`,
     images: [
       {
-        url: "https://poetry.darshanregmi.com.np/author.jpg",
+        url: `${SITE_URL}/author.jpg`,
         width: 800,
         height: 1000,
         alt: "Darshan Regmi - Poetry Author",
@@ -30,7 +31,7 @@ export const metadata: Metadata = {
     title: "About the Author | i feel, therefore i write",
     description:
       "Learn more about Darshan Regmi, the poet behind i feel, therefore i write.",
-    images: ["https://poetry.darshanregmi.com.np/author.jpg"],
+    images: [`${SITE_URL}/author.jpg`],
   },
 };
 

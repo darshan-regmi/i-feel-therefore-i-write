@@ -9,7 +9,6 @@ import {
   query,
   where,
   getDocs,
-  setDoc,
 } from 'firebase/firestore';
 
 const LIKES_COLLECTION = 'likes';
@@ -170,18 +169,10 @@ export const toggleLike = async (
       console.log(`✅ Unliked poem ${poemId} (${duration}ms)`);
       return false;
     } else {
-      // Like
+      // Like. The poem doc is guaranteed to exist by the /api/sync cron;
+      // we no longer lazy-create here because the create path is correctly
+      // blocked by firestore.rules (no client should be inventing poems).
       console.log(`❤️ Liking poem: ${poemId}`);
-      
-      // Ensure poem document exists
-      const poemDoc = await getDoc(poemRef);
-      if (!poemDoc.exists()) {
-        console.log(`📝 Creating poem document for ${poemId}`);
-        await setDoc(poemRef, {
-          likes: 0,
-          createdAt: new Date().toISOString(),
-        });
-      }
 
       batch.update(poemRef, { likes: increment(1) });
       batch.set(userLikeRef, {
@@ -189,9 +180,9 @@ export const toggleLike = async (
         poemId,
         timestamp: new Date(),
       } as LikeDocument);
-      
+
       await batch.commit();
-      
+
       const duration = Date.now() - startTime;
       console.log(`✅ Liked poem ${poemId} (${duration}ms)`);
       return true;

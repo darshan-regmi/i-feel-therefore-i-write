@@ -3,19 +3,23 @@ export const runtime = 'edge';
 
 import { Metadata } from "next";
 import { getPoemById, type Poem } from "@/lib/notion";
+import { SITE_URL } from "@/lib/site";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import BackButtonWithScroll from "@/components/BackButton_1";
 import LikeButton from "@/components/LikeButtonLazy";
-
-const SITE_URL = "https://poetry.darshanregmi.com.np";
 
 export async function generateMetadata({
   params,
 }: {
   params: { id: string };
 }): Promise<Metadata> {
-  const poem = await getPoemById(params.id);
+  let poem: Poem | null = null;
+  try {
+    poem = await getPoemById(params.id);
+  } catch {
+    poem = null;
+  }
 
   if (!poem) {
     return {
@@ -42,7 +46,12 @@ export async function generateMetadata({
 }
 
 export default async function PoemPage({ params }: { params: { id: string } }) {
-  const poem: Poem | null = await getPoemById(params.id);
+  let poem: Poem | null = null;
+  try {
+    poem = await getPoemById(params.id);
+  } catch {
+    poem = null;
+  }
 
   if (!poem) {
     notFound();
