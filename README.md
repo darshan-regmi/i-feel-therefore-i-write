@@ -1,4 +1,5 @@
-# 🌿 i feel, therefore i write  
+# 🌿 i feel, therefore i write
+
 _a collection of verses and emotions — raw, real, human._
 
 > “for anyone who’s ever felt too much, or not enough.”
@@ -8,6 +9,7 @@ _a collection of verses and emotions — raw, real, human._
 ---
 
 # ✨ Features
+
 - 🖋️ Read original poems in a quiet, thoughtful space — where words breathe.
 - 🎨 Soft, serif-centered design that feels more like a journal than a website.
 - ⚡ Fast and fluid — built with Next.js for a seamless, distraction-free flow.
@@ -55,7 +57,7 @@ Example Worker (optional):
 export default {
   async scheduled(controller, env, ctx) {
     await fetch(env.SITE_URL + "/api/sync");
-  }
+  },
 };
 ```
 
@@ -74,6 +76,7 @@ wrangler deploy
 Note: The Worker only needs `SITE_URL` as a plain text var. `NOTION_API_KEY` is used by your Next.js app; set it in your Cloudflare Pages project env.
 
 # 📌 Project Structure (App Router)
+
 ```bash
 /app
     ├── favicon.ico
@@ -83,6 +86,7 @@ Note: The Worker only needs `SITE_URL` as a plain text var. `NOTION_API_KEY` is 
     └── poem
         └── page.tsx   # Poem detail page
 ```
+
 ---
 
 # 💭 Inspiration
@@ -90,8 +94,6 @@ Note: The Worker only needs `SITE_URL` as a plain text var. `NOTION_API_KEY` is 
 This project is a digital reflection of deep feeling and artistic expression. It’s built for poets, feelers, and quiet creators who believe that vulnerability is strength.
 
 > “I am made of quiet fire.”
-
-
 
 # 🧑‍💻 Author
 
@@ -110,4 +112,4 @@ Unauthorized use, distribution, or reproduction of any part of this project is s
 
 If you’d like to collaborate, showcase, or discuss the project — feel free to reach out.
 
-### 📬  DM via [Instagram](https://instagram.com/wordsbydarshan)
+### 📬 DM via [Instagram](https://instagram.com/wordsbydarshan)
