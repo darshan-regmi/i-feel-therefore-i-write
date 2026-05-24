@@ -4,7 +4,7 @@ _a collection of verses and emotions — raw, real, human._
 
 > "for anyone who's ever felt too much, or not enough."
 
-A minimalist poetry-sharing web app built with Next.js. Poems live in a Notion database, sync hourly to Firestore (which tracks likes), and render through a clean, serif-centered reading experience.
+A minimalist poetry-sharing web app built with Next.js. Poems live in a Notion database, sync daily to Firestore (which tracks likes), and render through a clean, serif-centered reading experience.
 
 ---
 
@@ -27,14 +27,14 @@ A minimalist poetry-sharing web app built with Next.js. Poems live in a Notion d
 - **[Notion](https://developers.notion.com/)** — source of truth for poem content
 - **[Firebase Auth + Firestore](https://firebase.google.com/)** — likes + anonymous auth
 - **[Cloudflare Pages](https://pages.cloudflare.com/)** — hosting (via `@cloudflare/next-on-pages`)
-- **[Cloudflare Workers](https://workers.cloudflare.com/)** — hourly cron that triggers `/api/sync`
+- **[Cloudflare Workers](https://workers.cloudflare.com/)** — daily cron that triggers `/api/sync`
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-   ┌─────────┐    cron (hourly)    ┌──────────────┐
+   ┌─────────┐    cron (daily)     ┌──────────────┐
    │ Worker  │ ───────────────────▶│ /api/sync    │
    └─────────┘                     │ (edge)       │
                                    └──────┬───────┘
@@ -54,7 +54,7 @@ A minimalist poetry-sharing web app built with Next.js. Poems live in a Notion d
 ```
 
 - **Poem content** is authored in Notion (status: `Published`). Notion is the only source of truth for titles and bodies.
-- `/api/sync` upserts every published Notion poem into Firestore. It runs hourly via a Cloudflare Worker cron and can also be triggered manually.
+- `/api/sync` upserts every published Notion poem into Firestore. It runs daily via a Cloudflare Worker cron and can also be triggered manually.
 - **Likes** live entirely in Firestore. The `poems` collection stores a `likes` counter per poem; the `likes` collection holds one `{poemId}_{userId}` doc per like.
 - The `/poem` page server-prefetches all like counts in one batched call and shares the user's liked-poem set across every `LikeButton` via React Context — so the UI hydrates without N round-trips.
 
@@ -99,7 +99,7 @@ Every required variable is documented in [`.env.example`](.env.example). Briefly
 2. Build command: `npx @cloudflare/next-on-pages@1`. Output dir: `.vercel/output/static`.
 3. In the Pages project, add every env var from `.env.example` (Production and Preview).
 
-### Cron worker (the hourly sync trigger)
+### Cron worker (the daily sync trigger)
 
 The worker source lives in [`cloudflare-worker/worker.ts`](cloudflare-worker/worker.ts) with config in [`wrangler.toml`](wrangler.toml).
 
@@ -109,7 +109,7 @@ wrangler secret put SYNC_SECRET   # paste the same value as in Pages env
 wrangler deploy
 ```
 
-The worker hits `${SITE_URL}/api/sync` every hour with the `x-sync-secret` header. `SITE_URL` is a plain var in `wrangler.toml` — update it to your domain before deploying.
+The worker hits `${SITE_URL}/api/sync` once a day (00:00 UTC) with the `x-sync-secret` header. `SITE_URL` is a plain var in `wrangler.toml` — update it to your domain before deploying.
 
 ### Firestore security rules
 
@@ -174,7 +174,7 @@ src/
     └── site.ts                     # canonical SITE_URL
 
 cloudflare-worker/
-└── worker.ts                       # hourly cron → /api/sync
+└── worker.ts                       # daily cron → /api/sync
 ```
 
 ---
