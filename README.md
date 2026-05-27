@@ -65,11 +65,11 @@ A minimalist poetry-sharing web app built with Next.js. Poems live in a Notion d
 ```bash
 git clone https://github.com/darshan-regmi/i-feel-therefore-i-write.git
 cd i-feel-therefore-i-write
-npm install
+pnpm install
 
 cp .env.example .env.local   # fill in real values (see below)
 
-npm run dev
+pnpm run dev
 ```
 
 Open <http://localhost:3000>.
