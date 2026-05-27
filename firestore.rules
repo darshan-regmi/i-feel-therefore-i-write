@@ -26,9 +26,11 @@ service cloud.firestore {
 
     // Likes collection — one doc per (poem, user) recording an individual like.
     match /likes/{likeId} {
-      // Users can read only their own likes.
+      // Users can read only their own likes. The `resource == null` guard
+      // allows getDoc() to return "not found" (instead of permission-denied)
+      // when checking if a like exists before creating it.
       allow read: if request.auth != null
-                  && request.auth.uid == resource.data.userId;
+                  && (resource == null || request.auth.uid == resource.data.userId);
 
       // Like ID must be `${poemId}_${userId}` so a user cannot impersonate
       // someone else's like.
