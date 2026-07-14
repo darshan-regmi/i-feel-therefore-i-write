@@ -24,6 +24,7 @@
     "wrangler": "^3.114.14"
   },
   "devDependencies": {
+    "@cloudflare/next-on-pages": "^1.13.16",
     "@eslint/eslintrc": "^3",
     "@next/bundle-analyzer": "^15.3.3",
     "@tailwindcss/postcss": "^4",
