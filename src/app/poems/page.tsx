@@ -1,22 +1,14 @@
-'use client'
+import { notFound } from "next/navigation";
 
-import Link from 'next/link'
-
-export default function LostPoemPage() {
-  return (
-    <main className="min-h-screen bg-white text-gray-900 flex flex-col items-center justify-center p-8 text-center">
-      <h1 className="text-4xl font-serif font-bold mb-6">It seems you’ve wandered off...</h1>
-      <p className="text-gray-600 mb-6 leading-relaxed max-w-md">
-        The poem you seek may have slipped into the shadows of forgotten verses,  
-        or perhaps it’s waiting for you somewhere else along the path.  
-        But don’t worry — there are still countless words waiting to be discovered.
-      </p>
-      <Link
-        href="/poem"
-        className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
-      >
-        ← Return to the world of poems
-      </Link>
-    </main>
-  )
+/**
+ * This used to render an inline "you've wandered off" page with a 200 status —
+ * a soft 404. Google treats those as valid pages, so a dead end competed with
+ * the real indexable routes and absorbed link equity.
+ *
+ * The root not-found.tsx already has matching copy and the same /poem link, so
+ * delegating to it returns a real 404 status with no change in experience.
+ * /poem/[id] uses notFound() the same way for missing poems.
+ */
+export default function LostPoemPage(): never {
+  notFound();
 }
