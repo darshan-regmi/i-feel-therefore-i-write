@@ -7,7 +7,6 @@ import {
   createUserWithEmailAndPassword,
   signInWithPopup,
   GoogleAuthProvider,
-  linkWithPopup,
   onAuthStateChanged,
 } from "firebase/auth";
 import { EmailAuthProvider, linkWithCredential } from "firebase/auth";
@@ -102,72 +101,53 @@ export default function LoginPage() {
 
     try {
       const provider = new GoogleAuthProvider();
-      
+
       // Force account selection and prevent auto-select
       provider.setCustomParameters({
-        prompt: 'select_account'
+        prompt: "select_account",
       });
 
       const currentUser = auth.currentUser;
+      const wasAnonymous = !!currentUser?.isAnonymous;
 
-      if (currentUser?.isAnonymous) {
-        // Try to link anonymous account with Google
-        console.log("🔗 Attempting to link anonymous account with Google...");
-        
-        try {
-          const result = await linkWithPopup(currentUser, provider);
+      // Sign in with the existing account rather than linkWithPopup().
+      //
+      // Liking a poem signs the visitor in anonymously, so by the time they
+      // reach /login there is almost always an anonymous currentUser. That used
+      // to route into linkWithPopup(), which only works when the Google account
+      // does NOT already exist. For a returning user the credential is already
+      // bound to an account, so linkWithPopup() always threw, and the fallback
+      // signInWithPopup() immediately after collided with the first popup's
+      // teardown -> auth/cancelled-popup-request, surfaced as "sign-in was
+      // cancelled" right after the user picked their account.
+      //
+      // This mirrors the email sign-in path above: sign in, then migrate the
+      // anonymous likes onto the real account.
+      console.log("🔐 Signing in with Google...");
+
+      try {
+        const result = await signInWithPopup(auth, provider);
+
+        // Carry any likes collected while anonymous over to the real account.
+        if (wasAnonymous && currentUser.uid !== result.user.uid) {
           await migrateLikes(currentUser.uid, result.user.uid);
-          console.log("✅ Anonymous account linked with Google");
-          router.push("/liked-poem");
-        } catch (linkError: any) {
-          console.warn("⚠️ Link error:", linkError.code);
-          
-          // If credential already in use, sign in with that account
-          if (linkError.code === "auth/credential-already-in-use") {
-            console.log("🔄 Credential already in use, signing in instead...");
-            const result = await signInWithPopup(auth, provider);
-            await migrateLikes(currentUser.uid, result.user.uid);
-            console.log("✅ Signed in with existing Google account");
-            router.push("/liked-poem");
-          } else if (linkError.code === "auth/popup-closed-by-user") {
-            setError("sign-in was cancelled. please try again.");
-            setLoading(false);
-            return;
-          } else if (linkError.code === "auth/popup-blocked") {
-            setError("popup was blocked. please enable popups and try again.");
-            setLoading(false);
-            return;
-          } else {
-            throw linkError;
-          }
+          console.log("✅ Likes migrated from anonymous session");
         }
-      } else {
-        // Direct sign in with Google
-        console.log("🔐 Signing in with Google...");
-        
-        try {
-          const result = await signInWithPopup(auth, provider);
 
-          // Migrate likes if there was an anonymous session
-          if (currentUser?.isAnonymous && currentUser.uid !== result.user.uid) {
-            await migrateLikes(currentUser.uid, result.user.uid);
-            console.log("✅ Likes migrated from anonymous session");
-          }
-          
-          console.log("✅ Signed in with Google");
-          router.push("/liked-poem");
-        } catch (popupError: any) {
-          if (popupError.code === "auth/popup-closed-by-user") {
-            setError("sign-in was cancelled. please try again.");
-            setLoading(false);
-            return;
-          } else if (popupError.code === "auth/popup-blocked") {
-            setError("popup was blocked. please enable popups and try again.");
-            setLoading(false);
-            return;
-          }
-          throw popupError;
+        console.log("✅ Signed in with Google");
+        router.push("/liked-poem");
+      } catch (popupError: any) {
+        if (
+          popupError.code === "auth/popup-closed-by-user" ||
+          popupError.code === "auth/cancelled-popup-request"
+        ) {
+          setError("sign-in was cancelled. please try again.");
+          return;
+        } else if (popupError.code === "auth/popup-blocked") {
+          setError("popup was blocked. please enable popups and try again.");
+          return;
         }
+        throw popupError;
       }
     } catch (error: any) {
       console.error("❌ Google sign-in error:", error);
