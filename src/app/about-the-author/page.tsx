@@ -35,9 +35,46 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * The root layout emits the Person entity; this marks the page itself as the
+ * author's profile and ties it to the site, which is what qualifies it for the
+ * profile/breadcrumb treatments.
+ */
+function JsonLd() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    "@id": `${SITE_URL}/about-the-author#profilepage`,
+    url: `${SITE_URL}/about-the-author`,
+    name: "About the Author",
+    description:
+      "Learn more about Darshan Regmi, the poet behind i feel, therefore i write.",
+    inLanguage: "en",
+    isPartOf: { "@id": `${SITE_URL}/#website` },
+    mainEntity: { "@id": `${SITE_URL}/#person` },
+    about: { "@id": `${SITE_URL}/#person` },
+    breadcrumb: {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+        { "@type": "ListItem", position: 2, name: "About the Author", item: `${SITE_URL}/about-the-author` },
+      ],
+    },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
+
 const AboutTheAuthor: React.FC = () => {
   return (
-    <div className="bg-gradient-to-br from-slate-50 via-white to-gray-50 flex flex-col justify-between min-h-screen">
+    <>
+      <JsonLd />
+      <div className="bg-gradient-to-br from-slate-50 via-white to-gray-50 flex flex-col justify-between min-h-screen">
       <main className="flex flex-col items-center px-4 sm:px-6 lg:px-8 py-8 text-gray-900">
         <Link
           href="/"
@@ -118,6 +155,7 @@ const AboutTheAuthor: React.FC = () => {
         <Footer />
       </footer>
     </div>
+    </>
   );
 };
 

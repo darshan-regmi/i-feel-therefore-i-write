@@ -48,9 +48,57 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * The root layout already emits WebSite + Person. This adds the page-level
+ * types that tell Google the homepage is a personal profile whose whole point
+ * is the author and their poems.
+ */
+function JsonLd() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "ProfilePage",
+        "@id": `${SITE_URL}/#profilepage`,
+        url: `${SITE_URL}/`,
+        name: "i feel, therefore i write | Poetry Collection by Darshan Regmi",
+        description:
+          "A heartfelt poetry collection by Darshan Regmi, exploring love, emotion, healing, and self-expression.",
+        inLanguage: "en",
+        isPartOf: { "@id": `${SITE_URL}/#website` },
+        mainEntity: { "@id": `${SITE_URL}/#person` },
+        about: { "@id": `${SITE_URL}/#person` },
+      },
+      {
+        "@type": "CollectionPage",
+        "@id": `${SITE_URL}/#collection`,
+        url: `${SITE_URL}/poem`,
+        name: "Poems by Darshan Regmi",
+        isPartOf: { "@id": `${SITE_URL}/#website` },
+        about: { "@id": `${SITE_URL}/#person` },
+        mainEntity: {
+          "@type": "ItemList",
+          itemListOrder: "https://schema.org/ItemListUnordered",
+          numberOfItems: 0,
+          itemListElement: [],
+        },
+      },
+    ],
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
+
 export default function Home() {
   return (
-    <main className="relative min-h-screen bg-gradient-to-br from-gray-50 via-white to-slate-50 text-gray-900 flex flex-col items-center justify-center p-8 overflow-hidden">
+    <>
+      <JsonLd />
+      <main className="relative min-h-screen bg-gradient-to-br from-gray-50 via-white to-slate-50 text-gray-900 flex flex-col items-center justify-center p-8 overflow-hidden">
       {/* Subtle decorative elements */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-gray-100/20 via-transparent to-transparent pointer-events-none"></div>
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-slate-100/20 via-transparent to-transparent pointer-events-none"></div>
@@ -104,5 +152,6 @@ export default function Home() {
         <p className="text-6xl font-serif text-gray-400">&ldquo;</p>
       </div>
     </main>
+    </>
   );
 }
