@@ -27,9 +27,10 @@ export const metadata: Metadata = {
     "A personal collection of poems by Darshan Regmi. For anyone who's ever felt too much, or not enough—verses that echo love, loss, healing, and self-discovery.",
   applicationName: "i feel, therefore i write",
   category: "poetry",
-  alternates: {
-    canonical: SITE_URL,
-  },
+  // No `alternates.canonical` here on purpose: root-layout metadata is
+  // inherited by every route, so declaring the homepage canonical up here made
+  // /poem/doorway, /login, /liked-poem and /poems all claim to be duplicates of
+  // "/". Each route declares its own instead.
   keywords: [
     // Core poetry topics
     "poetry",
