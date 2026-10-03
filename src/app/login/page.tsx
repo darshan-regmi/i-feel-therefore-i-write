@@ -5,7 +5,8 @@ import { useState, useEffect } from "react";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider,
   onAuthStateChanged,
 } from "firebase/auth";
@@ -15,6 +16,31 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { migrateLikes } from "@/utils/firebaseUtils";
 
+// The Google flow leaves the page entirely, so the uid whose likes still need
+// migrating is parked in sessionStorage until the redirect comes back.
+const PENDING_ANON_UID_KEY = "pendingAnonUid";
+
+function readPendingAnonUid(): string | null {
+  try {
+    return sessionStorage.getItem(PENDING_ANON_UID_KEY);
+  } catch {
+    // Storage can be unavailable in private/locked-down browsing modes.
+    return null;
+  }
+}
+
+function writePendingAnonUid(uid: string | null) {
+  try {
+    if (uid) {
+      sessionStorage.setItem(PENDING_ANON_UID_KEY, uid);
+    } else {
+      sessionStorage.removeItem(PENDING_ANON_UID_KEY);
+    }
+  } catch {
+    // Ignore — the sign-in still works, only the likes migration is skipped.
+  }
+}
+
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
@@ -23,21 +49,66 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [authInitialized, setAuthInitialized] = useState(false);
+  const [redirectResolved, setRedirectResolved] = useState(false);
   const router = useRouter();
+
+  // Finish a Google sign-in that came back from a redirect.
+  //
+  // signInWithRedirect replaces the page, so the anonymous uid is recovered
+  // from sessionStorage here rather than from a variable. This must complete
+  // before the observer below is allowed to navigate, otherwise the likes
+  // migration could be interrupted mid-flight.
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const result = await getRedirectResult(auth);
+
+        if (result?.user) {
+          const anonUid = readPendingAnonUid();
+          if (anonUid && anonUid !== result.user.uid) {
+            await migrateLikes(anonUid, result.user.uid);
+            console.log("✅ Likes migrated from anonymous session");
+          }
+          writePendingAnonUid(null);
+
+          if (!cancelled) {
+            console.log("✅ Signed in with Google");
+            router.push("/liked-poem");
+          }
+        }
+      } catch (error: any) {
+        console.error("❌ Google redirect error:", error);
+        writePendingAnonUid(null);
+        if (!cancelled) {
+          setError(getErrorMessage(error.code));
+        }
+      } finally {
+        if (!cancelled) setRedirectResolved(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
 
   // Check if user is already logged in (not anonymous)
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setAuthInitialized(true);
-      
-      // If user is authenticated (not anonymous), redirect to liked poems
-      if (user && !user.isAnonymous) {
+
+      // If user is authenticated (not anonymous), redirect to liked poems.
+      // Hold off until any redirect has been processed so anonymous likes are
+      // carried over before we leave the page.
+      if (redirectResolved && user && !user.isAnonymous) {
         router.push("/liked-poem");
       }
     });
 
     return () => unsubscribe();
-  }, [router]);
+  }, [router, redirectResolved]);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,51 +179,28 @@ export default function LoginPage() {
       });
 
       const currentUser = auth.currentUser;
-      const wasAnonymous = !!currentUser?.isAnonymous;
 
-      // Sign in with the existing account rather than linkWithPopup().
-      //
       // Liking a poem signs the visitor in anonymously, so by the time they
-      // reach /login there is almost always an anonymous currentUser. That used
-      // to route into linkWithPopup(), which only works when the Google account
-      // does NOT already exist. For a returning user the credential is already
-      // bound to an account, so linkWithPopup() always threw, and the fallback
-      // signInWithPopup() immediately after collided with the first popup's
-      // teardown -> auth/cancelled-popup-request, surfaced as "sign-in was
-      // cancelled" right after the user picked their account.
+      // reach /login there is usually an anonymous currentUser. Park its uid
+      // so the redirect handler can carry those likes onto the Google account
+      // once we come back. This replaces the old linkWithPopup() approach,
+      // which only worked when the Google account did not already exist.
+      writePendingAnonUid(currentUser?.isAnonymous ? currentUser.uid : null);
+
+      // Use a full-page redirect rather than signInWithPopup().
       //
-      // This mirrors the email sign-in path above: sign in, then migrate the
-      // anonymous likes onto the real account.
-      console.log("🔐 Signing in with Google...");
-
-      try {
-        const result = await signInWithPopup(auth, provider);
-
-        // Carry any likes collected while anonymous over to the real account.
-        if (wasAnonymous && currentUser.uid !== result.user.uid) {
-          await migrateLikes(currentUser.uid, result.user.uid);
-          console.log("✅ Likes migrated from anonymous session");
-        }
-
-        console.log("✅ Signed in with Google");
-        router.push("/liked-poem");
-      } catch (popupError: any) {
-        if (
-          popupError.code === "auth/popup-closed-by-user" ||
-          popupError.code === "auth/cancelled-popup-request"
-        ) {
-          setError("sign-in was cancelled. please try again.");
-          return;
-        } else if (popupError.code === "auth/popup-blocked") {
-          setError("popup was blocked. please enable popups and try again.");
-          return;
-        }
-        throw popupError;
-      }
+      // Popups are blocked or silently dropped in iOS Safari and in the
+      // in-app browsers used by Instagram/Threads/etc., which is exactly where
+      // a shared poem link tends to open. The redirect flow works in all of
+      // them; getRedirectResult() above finishes the sign-in and the likes
+      // migration when the page comes back.
+      console.log("🔐 Redirecting to Google...");
+      await signInWithRedirect(auth, provider);
+      // On success the browser navigates away; nothing below runs.
     } catch (error: any) {
       console.error("❌ Google sign-in error:", error);
+      writePendingAnonUid(null);
       setError(getErrorMessage(error.code));
-    } finally {
       setLoading(false);
     }
   };
@@ -175,6 +223,10 @@ export default function LoginPage() {
         return "sign-in was cancelled. please try again";
       case "auth/cancelled-popup-request":
         return "sign-in was cancelled. please try again";
+      case "auth/account-exists-with-different-credential":
+        return "this address already has a home here. sign in with email instead";
+      case "auth/operation-not-supported-in-this-environment":
+        return "this browser can't complete sign-in. try opening the site in Safari or Chrome";
       case "auth/network-request-failed":
         return "network error. please check your connection";
       case "auth/too-many-requests":
@@ -185,7 +237,7 @@ export default function LoginPage() {
   };
 
   // Show loading state while checking auth
-  if (!authInitialized) {
+  if (!authInitialized || !redirectResolved) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-slate-50">
         <div className="text-center space-y-4">
