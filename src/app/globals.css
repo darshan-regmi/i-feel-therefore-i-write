@@ -10,6 +10,13 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* /qwzx — the confessional */
+  --color-void: #0b0a0a;
+  --color-bone: #e9e2d0;
+  --color-acid: #c6ff3d;
+  --color-bruise: #3b1d5a;
+  --color-blood: #ff2e3f;
 }
 
 @media (prefers-color-scheme: dark) {
