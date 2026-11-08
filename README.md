@@ -85,6 +85,7 @@ Every required variable is documented in [`.env.example`](.env.example). Briefly
 | `NEXT_PUBLIC_FIREBASE_*`                                               | Firebase Web SDK config (browser)                                           |
 | `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` | Service-account credentials used by `/api/sync` to write Firestore via REST |
 | `SYNC_SECRET`                                                          | Shared between `/api/sync` and the Cloudflare cron worker                   |
+| `SYNC_TOTP_SECRET`                                                     | TOTP secret for the `/qwzx` confessional (human-triggered sync)             |
 | `REVALIDATE_SECRET`                                                    | Gates `POST /api/revalidate` for cache busts                                |
 
 `/api/sync` runs on the edge runtime, so it talks to Firestore via REST + a Web-Crypto-signed service-account JWT (no `firebase-admin`).
@@ -130,6 +131,35 @@ curl -H "x-sync-secret: $SYNC_SECRET" https://your-domain/api/sync
 
 Response includes `{ added, updated, unchanged }` counts and bust the `poems` + `poem-likes` cache tags on success.
 
+### The confessional (`/qwzx`)
+
+The same sync can be triggered from a browser at `/qwzx` — no static secret
+involved. It asks for a 6-digit TOTP code, verified server-side by
+`POST /api/sync`.
+
+```bash
+node scripts/gen-totp.mjs   # prints SYNC_TOTP_SECRET + an otpauth:// URI
+```
+
+Put the secret in your deployment env (and `.env.local` for dev), then paste the
+`otpauth://` URI (or just the secret) into the one-time-password field of your
+password manager. Codes rotate every 30 seconds.
+
+`GET /api/sync` keeps using `x-sync-secret` for the cron; `POST /api/sync`
+accepts only a valid TOTP code. The page is `noindex` and not linked from the
+site. Because 6 digits are brute-forceable in isolation, add a Cloudflare WAF
+rate-limit rule on `POST /api/sync` (e.g. 10/min per IP).
+
+While the sync drains, your own poem titles fall through the room. Holding one
+for 1s freezes it and pauses the sequence, then lifts the full poem into a
+reader that stays open until you press X (or Escape).
+
+The blob sleeps. Five seconds without input droops the eyes shut, slumps the
+body, drifts `z z z` off its shoulder and starts a synthesised snore (Web Audio,
+no asset, unlocked by your first gesture). A sleeping blob ignores the keyboard
+— click or tap it to wake it, and on touch that also raises the numeric
+keyboard. Its eyes are also the cursor, and they blink at an uneven human pace.
+
 ### Busting caches manually
 
 ```bash
@@ -150,7 +180,8 @@ src/
 │   ├── api/
 │   │   ├── poem/[id]/route.ts      # JSON read by client (rarely needed)
 │   │   ├── revalidate/route.ts     # path + tag invalidation
-│   │   └── sync/route.ts           # Notion → Firestore upsert
+│   │   └── sync/route.ts           # Notion → Firestore upsert (GET cron / POST TOTP)
+│   ├── qwzx/                       # TOTP-gated sync confessional
 │   ├── poem/
 │   │   ├── [id]/                   # individual poem page + OG images
 │   │   ├── doorway/                # password gate before /poem
@@ -161,6 +192,7 @@ src/
 │   ├── page.tsx                    # landing
 │   └── sitemap.ts                  # dynamic sitemap from Notion
 ├── components/
+│   ├── confessional/               # /qwzx blob, eyes, grain, falling poems
 │   ├── LikedPoemsProvider.tsx      # context: one auth + one Firestore query
 │   ├── LikeButton.tsx              # consumes context, server-seeded counts
 │   ├── PoemClient.tsx              # search + infinite scroll
@@ -168,6 +200,7 @@ src/
 └── lib/
     ├── firestoreRest.ts            # edge Firestore client (OAuth2 + REST)
     ├── notion.ts                   # cached Notion fetches
+    ├── totp.ts                     # edge-safe TOTP verification
     ├── poemLikes.ts                # server-side like-count prefetch
     ├── likes.ts                    # client Firestore helpers
     ├── firebase.ts                 # Firebase Web SDK init
