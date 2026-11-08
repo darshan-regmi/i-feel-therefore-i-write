@@ -5,14 +5,15 @@ import { getPoemById } from "@/lib/notion";
 
 export async function GET(
   request: Request, 
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const startTime = Date.now();
 
   try {
     // Validate poem ID
-    if (!params.id || typeof params.id !== 'string' || params.id.trim() === '') {
-      console.warn('⚠️ Invalid poem ID provided:', params.id);
+    if (!id || typeof id !== 'string' || id.trim() === '') {
+      console.warn('⚠️ Invalid poem ID provided:', id);
       return NextResponse.json(
         { 
           success: false, 
@@ -22,14 +23,14 @@ export async function GET(
       );
     }
 
-    console.log(`📖 Fetching poem: ${params.id} at`, new Date().toISOString());
+    console.log(`📖 Fetching poem: ${id} at`, new Date().toISOString());
 
     // Fetch poem from Notion
-    const poem = await getPoemById(params.id);
+    const poem = await getPoemById(id);
 
     if (!poem) {
       const duration = Date.now() - startTime;
-      console.warn(`⚠️ Poem not found: ${params.id} (${duration}ms)`);
+      console.warn(`⚠️ Poem not found: ${id} (${duration}ms)`);
       return NextResponse.json(
         { 
           success: false, 
@@ -40,7 +41,7 @@ export async function GET(
     }
 
     const duration = Date.now() - startTime;
-    console.log(`✅ Successfully fetched poem: ${params.id} - "${poem.title}" (${duration}ms)`);
+    console.log(`✅ Successfully fetched poem: ${id} - "${poem.title}" (${duration}ms)`);
 
     return NextResponse.json(
       {
@@ -58,13 +59,13 @@ export async function GET(
 
   } catch (error) {
     const duration = Date.now() - startTime;
-    console.error(`❌ [POEM API ERROR] ID: ${params.id}`, error);
+    console.error(`❌ [POEM API ERROR] ID: ${id}`, error);
     
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     const errorStack = error instanceof Error ? error.stack : undefined;
     
     console.error('Error details:', {
-      id: params.id,
+      id: id,
       message: errorMessage,
       stack: errorStack,
       duration,

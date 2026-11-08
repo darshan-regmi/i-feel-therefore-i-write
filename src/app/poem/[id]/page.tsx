@@ -10,14 +10,15 @@ import { notFound } from "next/navigation";
 import BackButtonWithScroll from "@/components/BackButton";
 import LikeButton from "@/components/LikeButtonLazy";
 
+type PoemRouteProps = { params: Promise<{ id: string }> };
+
 export async function generateMetadata({
   params,
-}: {
-  params: { id: string };
-}): Promise<Metadata> {
+}: PoemRouteProps): Promise<Metadata> {
+  const { id } = await params;
   let poem: Poem | null = null;
   try {
-    poem = await getPoemById(params.id);
+    poem = await getPoemById(id);
   } catch {
     poem = null;
   }
@@ -73,10 +74,11 @@ export async function generateMetadata({
   };
 }
 
-export default async function PoemPage({ params }: { params: { id: string } }) {
+export default async function PoemPage({ params }: PoemRouteProps) {
+  const { id } = await params;
   let poem: Poem | null = null;
   try {
-    poem = await getPoemById(params.id);
+    poem = await getPoemById(id);
   } catch {
     poem = null;
   }

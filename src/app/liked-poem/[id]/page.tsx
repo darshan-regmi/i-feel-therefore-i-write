@@ -12,11 +12,12 @@ import LikeButton from "@/components/LikeButtonLazy";
 export async function generateMetadata({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }): Promise<Metadata> {
+  const { id } = await params;
   let poem: Poem | null = null;
   try {
-    poem = await getPoemById(params.id);
+    poem = await getPoemById(id);
   } catch {
     poem = null;
   }
@@ -45,10 +46,15 @@ export async function generateMetadata({
   };
 }
 
-export default async function PoemPage({ params }: { params: { id: string } }) {
+export default async function PoemPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
   let poem: Poem | null = null;
   try {
-    poem = await getPoemById(params.id);
+    poem = await getPoemById(id);
   } catch {
     poem = null;
   }

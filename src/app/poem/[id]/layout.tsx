@@ -23,11 +23,12 @@ export default async function PoemLayout({
   params,
 }: {
   children: React.ReactNode;
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   let poem = null;
   try {
-    poem = await getPoemById(params.id);
+    poem = await getPoemById(id);
   } catch {
     poem = null;
   }

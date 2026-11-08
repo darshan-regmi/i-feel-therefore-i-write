@@ -11,9 +11,10 @@ export const contentType = "image/png";
 export default async function PoemOgImage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const poem = await getPoemById(params.id);
+  const { id } = await params;
+  const poem = await getPoemById(id);
 
   const title = poem?.title ?? "i feel, therefore i write";
   const excerptLines = poem?.content
