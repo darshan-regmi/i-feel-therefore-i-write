@@ -5,6 +5,7 @@ import {
   QueryDatabaseResponse,
 } from '@notionhq/client/build/src/api-endpoints';
 import { unstable_cache } from 'next/cache';
+import { cache } from 'react';
 
 if (!process.env.NOTION_API_KEY) {
   throw new Error('Missing required environment variable: NOTION_API_KEY. See .env.example.');
@@ -184,8 +185,14 @@ const NOTION_ID_RE = /^[0-9a-f]{32}$|^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-
  * Retrieve a single poem by page ID with caching. Returns null for any
  * fetch failure (invalid ID, network error, Notion 404) so callers can
  * cleanly fall through to `notFound()` without crashing the stream.
+ *
+ * The underlying fetch is memoised with React's `cache`, so `generateMetadata`,
+ * the layout, and the page share ONE Notion call per request instead of racing
+ * each other into the same cache miss and firing three.
  */
-export async function getPoemById(id: string): Promise<Poem | null> {
+export const getPoemById = cache(async function fetchPoemById(
+  id: string
+): Promise<Poem | null> {
   if (!id || typeof id !== 'string' || !NOTION_ID_RE.test(id.trim())) {
     console.warn(`⚠️ Invalid Notion page ID shape: ${id}`);
     return null;
@@ -224,7 +231,7 @@ export async function getPoemById(id: string): Promise<Poem | null> {
     console.warn(`⚠️ Poem fetch failed for ${id}:`, error);
     return null;
   }
-}
+});
 
 /**
  * Return IDs for all published poems — useful for dynamic route generation.
