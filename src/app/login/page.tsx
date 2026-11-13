@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -15,6 +14,19 @@ import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { migrateLikes } from "@/utils/firebaseUtils";
+import {
+  reportAuthError,
+  SHOW_AUTH_ERROR_CODE,
+  type AuthErrorInfo,
+} from "@/lib/authErrors";
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD_LENGTH = 8;
+
+type FieldErrors = {
+  email?: string;
+  password?: string;
+};
 
 // The Google flow leaves the page entirely, so the uid whose likes still need
 // migrating is parked in sessionStorage until the redirect comes back.
@@ -41,12 +53,20 @@ function writePendingAnonUid(uid: string | null) {
   }
 }
 
+// Cancellations map to no message, so they clear the error region instead of
+// showing anything.
+function toShownAuthError(error: unknown): AuthErrorInfo | null {
+  const info = reportAuthError(error);
+  return info.message ? info : null;
+}
+
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<AuthErrorInfo | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [showPassword, setShowPassword] = useState(false);
   const [authInitialized, setAuthInitialized] = useState(false);
   const [redirectResolved, setRedirectResolved] = useState(false);
@@ -78,11 +98,10 @@ export default function LoginPage() {
             router.push("/liked-poem");
           }
         }
-      } catch (error: any) {
-        console.error("❌ Google redirect error:", error);
+      } catch (error: unknown) {
         writePendingAnonUid(null);
         if (!cancelled) {
-          setError(getErrorMessage(error.code));
+          setError(toShownAuthError(error));
         }
       } finally {
         if (!cancelled) setRedirectResolved(true);
@@ -112,8 +131,30 @@ export default function LoginPage() {
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const nextFieldErrors: FieldErrors = {};
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
+      nextFieldErrors.email = "Enter your email address.";
+    } else if (!EMAIL_RE.test(trimmedEmail)) {
+      nextFieldErrors.email =
+        "That doesn't look like an email address. Check for a typo.";
+    }
+
+    if (!password) {
+      nextFieldErrors.password = "Enter your password.";
+    } else if (!isLogin && password.length < MIN_PASSWORD_LENGTH) {
+      nextFieldErrors.password = `Use at least ${MIN_PASSWORD_LENGTH} characters.`;
+    }
+
+    setFieldErrors(nextFieldErrors);
+    if (Object.keys(nextFieldErrors).length > 0) {
+      return;
+    }
+
     setLoading(true);
-    setError("");
+    setError(null);
 
     try {
       const currentUser = auth.currentUser;
@@ -123,7 +164,7 @@ export default function LoginPage() {
         // Sign Up
         if (currentUser && currentUser.isAnonymous) {
           // Link anonymous account with email/password
-          const credential = EmailAuthProvider.credential(email, password);
+          const credential = EmailAuthProvider.credential(trimmedEmail, password);
           const result = await linkWithCredential(currentUser, credential);
 
           await migrateLikes(currentUser.uid, result.user.uid);
@@ -133,7 +174,7 @@ export default function LoginPage() {
           // Create new account
           const result = await createUserWithEmailAndPassword(
             auth,
-            email,
+            trimmedEmail,
             password
           );
           newUser = result.user;
@@ -145,7 +186,7 @@ export default function LoginPage() {
         }
       } else {
         // Sign In
-        const result = await signInWithEmailAndPassword(auth, email, password);
+        const result = await signInWithEmailAndPassword(auth, trimmedEmail, password);
         newUser = result.user;
 
         // Migrate likes if coming from anonymous session
@@ -158,9 +199,8 @@ export default function LoginPage() {
 
       // Redirect after successful authentication
       router.push("/liked-poem");
-    } catch (error: any) {
-      console.error("❌ Email auth error:", error);
-      setError(getErrorMessage(error.code));
+    } catch (error: unknown) {
+      setError(toShownAuthError(error));
     } finally {
       setLoading(false);
     }
@@ -168,7 +208,7 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
-    setError("");
+    setError(null);
 
     try {
       const provider = new GoogleAuthProvider();
@@ -197,42 +237,10 @@ export default function LoginPage() {
       console.log("🔐 Redirecting to Google...");
       await signInWithRedirect(auth, provider);
       // On success the browser navigates away; nothing below runs.
-    } catch (error: any) {
-      console.error("❌ Google sign-in error:", error);
+    } catch (error: unknown) {
       writePendingAnonUid(null);
-      setError(getErrorMessage(error.code));
+      setError(toShownAuthError(error));
       setLoading(false);
-    }
-  };
-
-  const getErrorMessage = (errorCode: string) => {
-    switch (errorCode) {
-      case "auth/user-not-found":
-        return "no home found at this address";
-      case "auth/wrong-password":
-        return "the key doesn't fit this lock";
-      case "auth/email-already-in-use":
-        return "this address already has a home here";
-      case "auth/weak-password":
-        return "your key needs more strength";
-      case "auth/invalid-email":
-        return "this doesn't look like an address";
-      case "auth/popup-blocked":
-        return "popup was blocked. please enable popups and try again";
-      case "auth/popup-closed-by-user":
-        return "sign-in was cancelled. please try again";
-      case "auth/cancelled-popup-request":
-        return "sign-in was cancelled. please try again";
-      case "auth/account-exists-with-different-credential":
-        return "this address already has a home here. sign in with email instead";
-      case "auth/operation-not-supported-in-this-environment":
-        return "this browser can't complete sign-in. try opening the site in Safari or Chrome";
-      case "auth/network-request-failed":
-        return "network error. please check your connection";
-      case "auth/too-many-requests":
-        return "too many attempts. please try again later";
-      default:
-        return "something went wrong. please try again";
     }
   };
 
@@ -273,12 +281,20 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Error message */}
-          {error && (
-            <div className="bg-red-50 text-red-600 border border-red-200 rounded-xl p-4 text-center text-sm italic animate-shake">
-              {error}
-            </div>
-          )}
+          {/* Error message. The wrapper stays mounted so screen readers
+              announce updates from the live region. */}
+          <div aria-live="polite" aria-atomic="true">
+            {error?.message && (
+              <div className="bg-red-50 text-red-600 border border-red-200 rounded-xl p-4 text-center text-sm italic animate-shake">
+                <p>{error.message}</p>
+                {SHOW_AUTH_ERROR_CODE && (
+                  <p className="mt-1 font-mono text-xs not-italic text-red-400">
+                    {error.code}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Form */}
           <form onSubmit={handleEmailAuth} className="space-y-5">
@@ -293,12 +309,24 @@ export default function LoginPage() {
                 type="email"
                 id="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (fieldErrors.email) {
+                    setFieldErrors((prev) => ({ ...prev, email: undefined }));
+                  }
+                }}
                 placeholder="your@email.com"
                 required
                 disabled={loading}
+                aria-invalid={!!fieldErrors.email}
+                aria-describedby={fieldErrors.email ? "email-error" : undefined}
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent focus:bg-white transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
               />
+              {fieldErrors.email && (
+                <p id="email-error" className="mt-1.5 text-xs text-red-600">
+                  {fieldErrors.email}
+                </p>
+              )}
             </div>
 
             <div>
@@ -313,10 +341,22 @@ export default function LoginPage() {
                   type={showPassword ? "text" : "password"}
                   id="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (fieldErrors.password) {
+                      setFieldErrors((prev) => ({
+                        ...prev,
+                        password: undefined,
+                      }));
+                    }
+                  }}
                   placeholder="••••••••"
                   required
                   disabled={loading}
+                  aria-invalid={!!fieldErrors.password}
+                  aria-describedby={
+                    fieldErrors.password ? "password-error" : undefined
+                  }
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent focus:bg-white transition-all duration-200 pr-12 disabled:opacity-60 disabled:cursor-not-allowed"
                 />
                 <button
@@ -333,6 +373,11 @@ export default function LoginPage() {
                   )}
                 </button>
               </div>
+              {fieldErrors.password && (
+                <p id="password-error" className="mt-1.5 text-xs text-red-600">
+                  {fieldErrors.password}
+                </p>
+              )}
             </div>
 
             <button
@@ -400,7 +445,8 @@ export default function LoginPage() {
               type="button"
               onClick={() => {
                 setIsLogin(!isLogin);
-                setError("");
+                setError(null);
+                setFieldErrors({});
               }}
               className="text-gray-500 hover:text-gray-900 italic text-sm transition-colors duration-200 disabled:opacity-60"
               disabled={loading}
