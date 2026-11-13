@@ -68,8 +68,6 @@ export async function generateMetadata({
       card: "summary_large_image",
       title: `${poem.title} | i feel, therefore i write`,
       description: pageDescription,
-      site: "@Regmi6Darshan",
-      creator: "@Regmi6Darshan",
     },
   };
 }

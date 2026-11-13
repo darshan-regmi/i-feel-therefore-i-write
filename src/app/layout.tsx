@@ -106,8 +106,6 @@ export const metadata: Metadata = {
     title: "Poetry by Darshan Regmi | i feel, therefore i write",
     description:
       "A personal poetry collection exploring emotion, reflection, and vulnerability. Written by Darshan Regmi.",
-    site: "@Regmi6Darshan",
-    creator: "@Regmi6Darshan",
     images: [`${SITE_URL}/default-og-image.png`],
   },
 };
@@ -143,7 +141,6 @@ const siteJsonLd = {
       sameAs: [
         "https://instagram.com/bydarshanregmi",
         "https://instagram.com/_darshan_regmi",
-        "https://twitter.com/Regmi6Darshan",
       ],
     },
   ],

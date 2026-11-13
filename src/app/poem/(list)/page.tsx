@@ -49,8 +49,6 @@ export const metadata: Metadata = {
     title: "Darshan Regmi's Poems | i feel, therefore i write",
     description:
       "A personal archive of poetry by Darshan Regmi. Read poems that explore love, loneliness, memory, and meaning.",
-    site: "@Regmi6Darshan",
-    creator: "@Regmi6Darshan",
     images: [`${SITE_URL}/og-darshan-poetry.png`],
   },
 };

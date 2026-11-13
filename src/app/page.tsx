@@ -42,8 +42,6 @@ export const metadata: Metadata = {
     title: "i feel, therefore i write | Poetry Collection by Darshan Regmi",
     description:
       "Dive into original, emotional poetry by Darshan Regmi. A modern collection about love, healing, and self-expression.",
-    site: "@Regmi6Darshan",
-    creator: "@Regmi6Darshan",
     images: [`${SITE_URL}/default-og-image.png`],
   },
 };
