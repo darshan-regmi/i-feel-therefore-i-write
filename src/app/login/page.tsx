@@ -12,7 +12,7 @@ import {
 import { EmailAuthProvider, linkWithCredential } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, X } from "lucide-react";
 import { migrateLikes } from "@/utils/firebaseUtils";
 import {
   reportAuthError,
@@ -22,6 +22,9 @@ import {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 8;
+
+const MIGRATION_NOTICE =
+  "Signed in, but we couldn't carry over your earlier likes.";
 
 type FieldErrors = {
   email?: string;
@@ -67,6 +70,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<AuthErrorInfo | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [migrationNotice, setMigrationNotice] = useState<string | null>(null);
+  const [authFlowInProgress, setAuthFlowInProgress] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [authInitialized, setAuthInitialized] = useState(false);
   const [redirectResolved, setRedirectResolved] = useState(false);
@@ -80,6 +85,7 @@ export default function LoginPage() {
   // migration could be interrupted mid-flight.
   useEffect(() => {
     let cancelled = false;
+    setAuthFlowInProgress(true);
 
     (async () => {
       try {
@@ -87,11 +93,18 @@ export default function LoginPage() {
 
         if (result?.user) {
           const anonUid = readPendingAnonUid();
-          if (anonUid && anonUid !== result.user.uid) {
-            await migrateLikes(anonUid, result.user.uid);
-            console.log("✅ Likes migrated from anonymous session");
-          }
           writePendingAnonUid(null);
+
+          if (anonUid && anonUid !== result.user.uid) {
+            try {
+              await migrateLikes(anonUid, result.user.uid);
+              console.log("✅ Likes migrated from anonymous session");
+            } catch (migrationError) {
+              console.error("❌ Likes migration error:", migrationError);
+              if (!cancelled) setMigrationNotice(MIGRATION_NOTICE);
+              return;
+            }
+          }
 
           if (!cancelled) {
             console.log("✅ Signed in with Google");
@@ -104,7 +117,10 @@ export default function LoginPage() {
           setError(toShownAuthError(error));
         }
       } finally {
-        if (!cancelled) setRedirectResolved(true);
+        if (!cancelled) {
+          setRedirectResolved(true);
+          setAuthFlowInProgress(false);
+        }
       }
     })();
 
@@ -119,15 +135,21 @@ export default function LoginPage() {
       setAuthInitialized(true);
 
       // If user is authenticated (not anonymous), redirect to liked poems.
-      // Hold off until any redirect has been processed so anonymous likes are
-      // carried over before we leave the page.
-      if (redirectResolved && user && !user.isAnonymous) {
+      // Hold off while a sign-in is still running or a migration notice needs
+      // to be read, so anonymous likes are carried over before we leave.
+      if (
+        redirectResolved &&
+        user &&
+        !user.isAnonymous &&
+        !authFlowInProgress &&
+        !migrationNotice
+      ) {
         router.push("/liked-poem");
       }
     });
 
     return () => unsubscribe();
-  }, [router, redirectResolved]);
+  }, [router, redirectResolved, authFlowInProgress, migrationNotice]);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,10 +177,15 @@ export default function LoginPage() {
 
     setLoading(true);
     setError(null);
+    setMigrationNotice(null);
+    setAuthFlowInProgress(true);
+
+    let anonUid: string | null = null;
+    let newUid: string | null = null;
 
     try {
       const currentUser = auth.currentUser;
-      let newUser = null;
+      anonUid = currentUser?.isAnonymous ? currentUser.uid : null;
 
       if (!isLogin) {
         // Sign Up
@@ -167,8 +194,7 @@ export default function LoginPage() {
           const credential = EmailAuthProvider.credential(trimmedEmail, password);
           const result = await linkWithCredential(currentUser, credential);
 
-          await migrateLikes(currentUser.uid, result.user.uid);
-          newUser = result.user;
+          newUid = result.user.uid;
           console.log("✅ Anonymous account linked with email");
         } else {
           // Create new account
@@ -177,33 +203,40 @@ export default function LoginPage() {
             trimmedEmail,
             password
           );
-          newUser = result.user;
-
-          if (currentUser?.isAnonymous) {
-            await migrateLikes(currentUser.uid, newUser.uid);
-          }
+          newUid = result.user.uid;
           console.log("✅ New account created");
         }
       } else {
         // Sign In
         const result = await signInWithEmailAndPassword(auth, trimmedEmail, password);
-        newUser = result.user;
-
-        // Migrate likes if coming from anonymous session
-        if (currentUser?.isAnonymous && currentUser.uid !== newUser.uid) {
-          await migrateLikes(currentUser.uid, newUser.uid);
-          console.log("✅ Likes migrated from anonymous session");
-        }
+        newUid = result.user.uid;
         console.log("✅ Signed in successfully");
       }
-
-      // Redirect after successful authentication
-      router.push("/liked-poem");
     } catch (error: unknown) {
       setError(toShownAuthError(error));
-    } finally {
+      setAuthFlowInProgress(false);
       setLoading(false);
+      return;
     }
+
+    setLoading(false);
+
+    // Authentication is finished. Carrying likes over is best-effort and must
+    // never turn a successful sign-in into a login error.
+    if (anonUid && newUid && anonUid !== newUid) {
+      try {
+        await migrateLikes(anonUid, newUid);
+        console.log("✅ Likes migrated from anonymous session");
+      } catch (migrationError) {
+        console.error("❌ Likes migration error:", migrationError);
+        setMigrationNotice(MIGRATION_NOTICE);
+        setAuthFlowInProgress(false);
+        return;
+      }
+    }
+
+    setAuthFlowInProgress(false);
+    router.push("/liked-poem");
   };
 
   const handleGoogleSignIn = async () => {
@@ -295,6 +328,28 @@ export default function LoginPage() {
               </div>
             )}
           </div>
+
+          {/* A successful sign-in whose likes migration failed. Navigation is
+              held until this is dismissed so the note is actually seen. */}
+          {migrationNotice && (
+            <div
+              role="status"
+              className="flex items-start gap-3 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl p-4 text-sm"
+            >
+              <p className="flex-1 italic">{migrationNotice}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setMigrationNotice(null);
+                  router.push("/liked-poem");
+                }}
+                aria-label="Dismiss and continue"
+                className="text-amber-500 hover:text-amber-800 transition-colors duration-200"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
 
           {/* Form */}
           <form onSubmit={handleEmailAuth} className="space-y-5">
