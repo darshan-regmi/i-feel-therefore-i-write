@@ -222,7 +222,7 @@ A digital reflection of deep feeling and artistic expression. Built for poets, f
 
 ## Author
 
-Darshan Regmi — [@bydarshanregmi](https://instagram.com/bydarshanregmi)
+Darshan Regmi — [@_darshan_regmi](https://instagram.com/_darshan_regmi)
 Poet · Developer · Human
 _"I code as I write — with heart."_
 
@@ -232,7 +232,7 @@ _"I code as I write — with heart."_
 
 **This project is not open-source.**
 
-All code, design, and written content (including poems) are the personal and original work of Darshan Regmi ([@bydarshanregmi](https://instagram.com/bydarshanregmi)).
+All code, design, and written content (including poems) are the personal and original work of Darshan Regmi ([@_darshan_regmi](https://instagram.com/_darshan_regmi)).
 Unauthorized use, distribution, or reproduction of any part of this project is strictly prohibited.
 
-If you'd like to collaborate, showcase, or discuss the project — feel free to reach out via [Instagram DM](https://instagram.com/bydarshanregmi).
+If you'd like to collaborate, showcase, or discuss the project — feel free to reach out via [Instagram DM](https://instagram.com/_darshan_regmi).

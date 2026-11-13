@@ -139,7 +139,6 @@ const siteJsonLd = {
       image: `${SITE_URL}/author.jpg`,
       jobTitle: "Poet",
       sameAs: [
-        "https://instagram.com/bydarshanregmi",
         "https://instagram.com/_darshan_regmi",
       ],
     },
