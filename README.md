@@ -1,4 +1,4 @@
-# 🌿 i feel, therefore i write
+# i feel, therefore i write
 
 _a collection of verses and emotions — raw, real, human._
 
@@ -8,18 +8,18 @@ A minimalist poetry-sharing web app built with Next.js. Poems live in a Notion d
 
 ---
 
-## ✨ Features
+## Features
 
-- 🖋️ Read original poems in a quiet, thoughtful space — where words breathe.
-- ❤️ Per-user likes with anonymous Firebase Auth — no signup needed.
-- 🔍 Fuzzy search across every poem.
+- Read original poems in a quiet, thoughtful space.
+- Per-user likes with anonymous Firebase Auth, no signup needed.
+- Fuzzy search across every poem.
 - ⏳ Infinite scroll on the poem index (100 at a time).
-- 🎨 Soft, serif-centered design that feels more like a journal than a website.
-- ⚡ Edge-rendered with aggressive caching for fast cold loads.
+- Soft, serif-centred design that reads more like a journal than a website.
+- Edge-rendered with aggressive caching for fast cold loads.
 
 ---
 
-## 🛠 Tech stack
+## Tech stack
 
 - **[Next.js 15](https://nextjs.org/)** (App Router, edge runtime)
 - **[TypeScript](https://www.typescriptlang.org/)**
@@ -31,7 +31,7 @@ A minimalist poetry-sharing web app built with Next.js. Poems live in a Notion d
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
    ┌─────────┐    cron (daily)     ┌──────────────┐
@@ -60,7 +60,7 @@ A minimalist poetry-sharing web app built with Next.js. Poems live in a Notion d
 
 ---
 
-## 📦 Getting started
+## Getting started
 
 ```bash
 git clone https://github.com/darshan-regmi/i-feel-therefore-i-write.git
@@ -92,7 +92,7 @@ Every required variable is documented in [`.env.example`](.env.example). Briefly
 
 ---
 
-## 🚀 Deployment (Cloudflare Pages + Worker cron)
+## Deployment (Cloudflare Pages + Worker cron)
 
 ### Pages (the Next.js app)
 
@@ -172,7 +172,7 @@ curl "https://your-domain/api/revalidate?secret=$REVALIDATE_SECRET&tag=poem-like
 
 ---
 
-## 📁 Project structure
+## Project structure
 
 ```
 src/
@@ -212,7 +212,7 @@ cloudflare-worker/
 
 ---
 
-## 💭 Inspiration
+## Inspiration
 
 A digital reflection of deep feeling and artistic expression. Built for poets, feelers, and quiet creators who believe that vulnerability is strength.
 
@@ -220,7 +220,7 @@ A digital reflection of deep feeling and artistic expression. Built for poets, f
 
 ---
 
-## 🧑‍💻 Author
+## Author
 
 Darshan Regmi — [@bydarshanregmi](https://instagram.com/bydarshanregmi)
 Poet · Developer · Human
@@ -228,7 +228,7 @@ _"I code as I write — with heart."_
 
 ---
 
-## 🪶 License
+## License
 
 **This project is not open-source.**
 
