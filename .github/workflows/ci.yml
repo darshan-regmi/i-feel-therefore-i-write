@@ -46,6 +46,9 @@ jobs:
         run: npm run lint
         continue-on-error: true
 
+      - name: Unit tests
+        run: npm test
+
       # The build reads Notion during static generation. Without repository
       # secrets it cannot be a hard gate yet, so keep it non-blocking.
       - name: Build
