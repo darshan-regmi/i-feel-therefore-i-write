@@ -2,21 +2,43 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { onAuthStateChanged } from "firebase/auth";
+import {
+  onAuthStateChanged,
+  sendEmailVerification,
+  signOut,
+} from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { resetAuthCache } from "@/lib/likes";
+import { useLikedPoems } from "@/components/LikedPoemsProvider";
+import { X } from "lucide-react";
 import Link from "next/link";
 import PoemsWrapper from "@/components/PoemsWrapper_1";
+
+const RESEND_COOLDOWN_SECONDS = 60;
 
 export default function LikedPoemPage() {
   const [poems, setPoems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [signingOut, setSigningOut] = useState(false);
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [verificationDismissed, setVerificationDismissed] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const router = useRouter();
+  const likedPoems = useLikedPoems();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user || user.isAnonymous) {
         router.push("/login");
       } else {
+        // Google accounts are verified by the provider; only a password
+        // account can be sitting here with an unconfirmed address.
+        const hasPasswordProvider = user.providerData.some(
+          (provider) => provider.providerId === "password"
+        );
+        setNeedsVerification(hasPasswordProvider && !user.emailVerified);
+
         const fetchPoems = async () => {
           try {
             const res = await fetch("/api/poem");
@@ -39,6 +61,45 @@ export default function LikedPoemPage() {
 
     return () => unsubscribe();
   }, [router]);
+
+  const handleSignOut = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+
+    try {
+      await signOut(auth);
+      // The cached uid belongs to the signed-out session; without this the
+      // next visitor would keep using it for like lookups.
+      resetAuthCache();
+      likedPoems?.clearLikes();
+      router.push("/login");
+    } catch (error) {
+      console.error("Sign out failed:", error);
+      setSigningOut(false);
+    }
+  };
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown((s) => s - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
+
+  const handleResendVerification = async () => {
+    const user = auth.currentUser;
+    if (!user || resending || resendCooldown > 0) return;
+
+    setResending(true);
+
+    try {
+      await sendEmailVerification(user);
+    } catch (error) {
+      console.error("Could not resend verification email:", error);
+    } finally {
+      setResending(false);
+      setResendCooldown(RESEND_COOLDOWN_SECONDS);
+    }
+  };
 
   if (loading) {
     return (
@@ -100,7 +161,50 @@ export default function LikedPoemPage() {
             </span>
             <span className="font-medium">back to poems</span>
           </Link>
+
+          <button
+            type="button"
+            onClick={handleSignOut}
+            disabled={signingOut}
+            className="text-sm italic text-gray-500 hover:text-gray-900 transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {signingOut ? "signing out..." : "sign out"}
+          </button>
         </nav>
+
+        {/* Unverified password account. Dismissible: it is a reminder, not a
+            gate, so the poems stay reachable either way. */}
+        {needsVerification && !verificationDismissed && (
+          <div
+            role="status"
+            className="mb-10 flex flex-col gap-3 sm:flex-row sm:items-center rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800"
+          >
+            <p className="flex-1 italic">
+              Your email isn&#39;t confirmed yet. Follow the link we sent to
+              finish setting up your home.
+            </p>
+            <button
+              type="button"
+              onClick={handleResendVerification}
+              disabled={resending || resendCooldown > 0}
+              className="shrink-0 text-sm font-medium text-amber-800 underline underline-offset-4 hover:text-amber-950 transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:no-underline"
+            >
+              {resending
+                ? "sending..."
+                : resendCooldown > 0
+                  ? `resend in ${resendCooldown}s`
+                  : "resend email"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setVerificationDismissed(true)}
+              aria-label="Dismiss verification reminder"
+              className="shrink-0 self-start sm:self-auto text-amber-500 hover:text-amber-800 transition-colors duration-200"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
 
         {/* Header */}
         <header className="text-center mb-12 space-y-4">

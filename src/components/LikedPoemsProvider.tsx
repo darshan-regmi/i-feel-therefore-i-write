@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -17,6 +18,8 @@ type LikedPoemsContextValue = {
   ready: boolean;
   isLiked: (poemId: string) => boolean;
   markLiked: (poemId: string, liked: boolean) => void;
+  /** Drop all in-memory likes; used when the session changes or signs out. */
+  clearLikes: () => void;
 };
 
 const LikedPoemsContext = createContext<LikedPoemsContextValue | null>(null);
@@ -26,26 +29,37 @@ export function LikedPoemsProvider({ children }: { children: ReactNode }) {
   const [likedSet, setLikedSet] = useState<Set<string>>(() => new Set());
   const [ready, setReady] = useState(false);
 
+  // Incremented whenever a session is abandoned, so a slow fetch for the old
+  // uid cannot repopulate the new user's state.
+  const generationRef = useRef(0);
+
   useEffect(() => {
     let cancelled = false;
 
     const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
+      const generation = ++generationRef.current;
+
       try {
         let currentUid = user?.uid ?? null;
         if (!currentUid) {
           const result = await signInAnonymously(auth);
           currentUid = result.user.uid;
         }
-        if (cancelled) return;
+        if (cancelled || generation !== generationRef.current) return;
+
+        // Never let the previous session's likes survive a uid change.
         setUid(currentUid);
+        setLikedSet(new Set());
 
         const likedIds = await getUserLikedPoems(currentUid);
-        if (cancelled) return;
+        if (cancelled || generation !== generationRef.current) return;
         setLikedSet(new Set(likedIds));
       } catch (error) {
         console.error("LikedPoemsProvider: failed to initialise", error);
       } finally {
-        if (!cancelled) setReady(true);
+        if (!cancelled && generation === generationRef.current) {
+          setReady(true);
+        }
       }
     });
 
@@ -53,6 +67,13 @@ export function LikedPoemsProvider({ children }: { children: ReactNode }) {
       cancelled = true;
       unsubscribe();
     };
+  }, []);
+
+  const clearLikes = useCallback(() => {
+    generationRef.current++;
+    setUid(null);
+    setLikedSet(new Set());
+    setReady(false);
   }, []);
 
   const isLiked = useCallback((id: string) => likedSet.has(id), [likedSet]);
@@ -67,7 +88,9 @@ export function LikedPoemsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <LikedPoemsContext.Provider value={{ uid, ready, isLiked, markLiked }}>
+    <LikedPoemsContext.Provider
+      value={{ uid, ready, isLiked, markLiked, clearLikes }}
+    >
       {children}
     </LikedPoemsContext.Provider>
   );
