@@ -21,6 +21,7 @@ import {
   type AnonymousLikesSnapshot,
 } from "@/utils/firebaseUtils";
 import { getUserLikedPoems } from "@/lib/likes";
+import { isInAppBrowser } from "@/lib/inAppBrowser";
 import {
   reportAuthError,
   SHOW_AUTH_ERROR_CODE,
@@ -184,6 +185,13 @@ function LoginPageContent() {
   const [cooldown, setCooldown] = useState(0);
   const [redirectNotice, setRedirectNotice] = useState<string | null>(null);
   const [likesCaptureSettled, setLikesCaptureSettled] = useState(false);
+  // Detected after mount so the server-rendered HTML matches the first client
+  // render; the swap costs one frame.
+  const [isInApp, setIsInApp] = useState(false);
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "manual">(
+    "idle"
+  );
+  const [shareUrl, setShareUrl] = useState("");
   const router = useRouter();
   const isLogin = mode === "login";
   const isReset = mode === "reset";
@@ -233,6 +241,11 @@ function LoginPageContent() {
     }, AUTH_STARTUP_TIMEOUT_MS);
 
     return () => clearTimeout(timer);
+  }, []);
+
+  // In-app webviews cannot complete Google OAuth; show the way out instead.
+  useEffect(() => {
+    setIsInApp(isInAppBrowser(navigator.userAgent));
   }, []);
 
   // Finish a Google sign-in that came back from a redirect.
@@ -578,6 +591,23 @@ function LoginPageContent() {
     setAuthFlowInProgress(false);
   };
 
+  const handleCopyLink = async () => {
+    const url = window.location.href;
+    setShareUrl(url);
+
+    try {
+      if (!navigator.clipboard?.writeText) {
+        throw new Error("Clipboard API unavailable");
+      }
+      await navigator.clipboard.writeText(url);
+      setCopyState("copied");
+    } catch {
+      // No clipboard (or permission denied): show the URL so it can be
+      // selected and copied by hand.
+      setCopyState("manual");
+    }
+  };
+
   const handleGoogleSignIn = () => {
     if (loading || !likesCaptureSettled) return;
 
@@ -847,7 +877,7 @@ function LoginPageContent() {
             onClick={handleGoogleSignIn}
             type="button"
             className="w-full py-3.5 bg-white text-gray-700 border border-gray-300 rounded-xl shadow-sm hover:shadow-md hover:bg-gray-50 hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-3 font-medium disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-            disabled={loading || !likesCaptureSettled}
+            disabled={loading || !likesCaptureSettled || isInApp}
           >
             {loading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -873,6 +903,36 @@ function LoginPageContent() {
             )}
             <span>Continue with Google</span>
           </button>
+          )}
+
+          {/* In-app browsers block Google OAuth. The button above is disabled;
+              this explains why and offers the way out. */}
+          {isInApp && !isReset && (
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 space-y-3">
+              <p className="italic">
+                Google sign-in doesn&#39;t work inside this app&#39;s browser.
+                Open this page in Safari or Chrome, or sign in with your email
+                and password above.
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleCopyLink}
+                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                >
+                  {copyState === "copied" ? "link copied" : "copy link"}
+                </button>
+                {copyState === "manual" && (
+                  <input
+                    readOnly
+                    value={shareUrl}
+                    onFocus={(event) => event.currentTarget.select()}
+                    aria-label="Link to open in Safari or Chrome"
+                    className="min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs text-gray-700"
+                  />
+                )}
+              </div>
+            </div>
           )}
 
           {/* Toggle login/signup, or the way back from reset */}
