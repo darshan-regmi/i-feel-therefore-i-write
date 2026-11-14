@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect, useRef } from "react";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
   GoogleAuthProvider,
@@ -47,10 +48,64 @@ const RESET_COOLDOWN_SECONDS = 60;
 // result, an in-app webview). The form must not stay behind the spinner.
 const AUTH_STARTUP_TIMEOUT_MS = 5000;
 
-// The Google flow leaves the page entirely, so the anonymous snapshot is
-// parked in sessionStorage until the redirect comes back.
+// Both keys only matter for the redirect fallback; a popup keeps the snapshot
+// in memory and never leaves the page.
 const PENDING_LIKES_KEY = "pendingAnonLikes";
+const GOOGLE_REDIRECT_MARKER_KEY = "googleRedirectPending";
 
+// The only codes where a full-page redirect can still finish the sign-in.
+const GOOGLE_REDIRECT_FALLBACK_CODES = new Set([
+  "auth/popup-blocked",
+  "auth/operation-not-supported-in-this-environment",
+]);
+
+// The visitor closed the chooser, or a newer request replaced this one.
+const SILENT_GOOGLE_CODES = new Set([
+  "auth/popup-closed-by-user",
+  "auth/cancelled-popup-request",
+]);
+
+const GOOGLE_INCOMPLETE_NOTICE =
+  "Google sign-in didn't complete. Email and password still work.";
+
+function getAuthErrorCode(error: unknown): string | null {
+  return typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof (error as { code?: unknown }).code === "string"
+    ? (error as { code: string }).code
+    : null;
+}
+
+function readAndClearRedirectMarker(): boolean {
+  try {
+    const pending = sessionStorage.getItem(GOOGLE_REDIRECT_MARKER_KEY) === "1";
+    sessionStorage.removeItem(GOOGLE_REDIRECT_MARKER_KEY);
+    return pending;
+  } catch {
+    return false;
+  }
+}
+
+function writeRedirectMarker() {
+  try {
+    sessionStorage.setItem(GOOGLE_REDIRECT_MARKER_KEY, "1");
+  } catch {
+    // Losing the marker only costs the "didn't complete" notice; the redirect
+    // itself still works.
+  }
+}
+
+function clearRedirectMarker() {
+  try {
+    sessionStorage.removeItem(GOOGLE_REDIRECT_MARKER_KEY);
+  } catch {
+    // Ignore.
+  }
+}
+
+// The redirect fallback leaves the page entirely, so only then is the
+// anonymous snapshot parked in sessionStorage until the return.
 function readPendingLikes(): AnonymousLikesSnapshot | null {
   try {
     const raw = sessionStorage.getItem(PENDING_LIKES_KEY);
@@ -127,6 +182,8 @@ function LoginPageContent() {
   const [redirectResolved, setRedirectResolved] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [redirectNotice, setRedirectNotice] = useState<string | null>(null);
+  const [likesCaptureSettled, setLikesCaptureSettled] = useState(false);
   const router = useRouter();
   const isLogin = mode === "login";
   const isReset = mode === "reset";
@@ -143,18 +200,36 @@ function LoginPageContent() {
     Promise<AnonymousLikesSnapshot | null> | null
   >(null);
   const captureStartedRef = useRef(false);
+  const likesCaptureSettledRef = useRef(false);
+  const skipLikesMigrationRef = useRef(false);
+  // Lazily read on the first redirect-effect pass so StrictMode's dev remount
+  // cannot consume the marker before the real pass sees it.
+  const redirectMarkerRef = useRef<boolean | null>(null);
 
   // Escape hatch for a startup that never settles. Auth still keeps running in
   // the background; this only opens the gate so the form is usable.
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (authInitializedRef.current && redirectResolvedRef.current) return;
+      if (!authInitializedRef.current || !redirectResolvedRef.current) {
+        console.warn(
+          `Auth startup did not settle within ${AUTH_STARTUP_TIMEOUT_MS / 1000}s; showing the login form anyway.`
+        );
+        authInitializedRef.current = true;
+        redirectResolvedRef.current = true;
+        setAuthInitialized(true);
+        setRedirectResolved(true);
+      }
 
-      console.warn(
-        `Auth startup did not settle within ${AUTH_STARTUP_TIMEOUT_MS / 1000}s; showing the login form anyway.`
-      );
-      setAuthInitialized(true);
-      setRedirectResolved(true);
+      if (!likesCaptureSettledRef.current) {
+        // Do not keep Google disabled forever if the snapshot read stalls.
+        // Without the snapshot there is nothing to migrate.
+        console.warn(
+          `Anonymous likes capture did not settle within ${AUTH_STARTUP_TIMEOUT_MS / 1000}s; enabling Google without migration.`
+        );
+        skipLikesMigrationRef.current = true;
+        likesCaptureSettledRef.current = true;
+        setLikesCaptureSettled(true);
+      }
     }, AUTH_STARTUP_TIMEOUT_MS);
 
     return () => clearTimeout(timer);
@@ -162,13 +237,17 @@ function LoginPageContent() {
 
   // Finish a Google sign-in that came back from a redirect.
   //
-  // signInWithRedirect replaces the page, so the anonymous uid is recovered
-  // from sessionStorage here rather than from a variable. This must complete
-  // before the observer below is allowed to navigate, otherwise the likes
-  // migration could be interrupted mid-flight.
+  // Only the redirect fallback leaves the page, so the pending snapshot and a
+  // marker are read back here. The marker is removed on the first pass; if the
+  // result comes back empty afterwards, the sign-in silently failed.
   useEffect(() => {
     let cancelled = false;
     setAuthFlowInProgress(true);
+
+    if (redirectMarkerRef.current === null) {
+      redirectMarkerRef.current = readAndClearRedirectMarker();
+    }
+    const hadRedirectMarker = redirectMarkerRef.current;
 
     (async () => {
       try {
@@ -193,6 +272,14 @@ function LoginPageContent() {
             console.log("✅ Signed in with Google");
             router.push("/liked-poem");
           }
+        } else if (
+          hadRedirectMarker &&
+          !(auth.currentUser && !auth.currentUser.isAnonymous)
+        ) {
+          console.warn(
+            "Google redirect returned without a user; sign-in did not complete."
+          );
+          if (!cancelled) setRedirectNotice(GOOGLE_INCOMPLETE_NOTICE);
         }
       } catch (error: unknown) {
         writePendingLikes(null);
@@ -228,13 +315,15 @@ function LoginPageContent() {
             const poemIds = await getUserLikedPoems(user.uid);
             const snapshot = { uid: user.uid, poemIds };
             migrationSourceRef.current = snapshot;
-            writePendingLikes(snapshot);
             return snapshot;
           } catch (error) {
             console.error("❌ Could not capture anonymous likes:", error);
             return null;
           }
-        })();
+        })().finally(() => {
+          likesCaptureSettledRef.current = true;
+          setLikesCaptureSettled(true);
+        });
       }
 
       authInitializedRef.current = true;
@@ -283,6 +372,7 @@ function LoginPageContent() {
 
     setLoading(true);
     setError(null);
+    setRedirectNotice(null);
     setMigrationNotice(null);
     setAuthFlowInProgress(true);
 
@@ -410,44 +500,105 @@ function LoginPageContent() {
   const switchMode = (next: Mode) => {
     setMode(next);
     setError(null);
+    setRedirectNotice(null);
     setFieldErrors({});
     setResetSent(false);
   };
 
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
-    setError(null);
+  const handleGooglePopupSuccess = async (user: User) => {
+    setLoading(false);
+    console.log("✅ Signed in with Google");
 
-    try {
-      const provider = new GoogleAuthProvider();
+    // The Google account is now the session; no fallback snapshot should be
+    // left for a later sign-in in this tab.
+    writePendingLikes(null);
+    clearRedirectMarker();
 
-      // Force account selection and prevent auto-select
-      provider.setCustomParameters({
-        prompt: "select_account",
-      });
+    const snapshot = skipLikesMigrationRef.current
+      ? null
+      : migrationSourceRef.current;
 
-      // The anonymous snapshot was read on mount, before this click. Persist
-      // that already-captured copy so the redirect return can migrate it; this
-      // handler must never read Firestore itself.
-      if (migrationSourceRef.current) {
+    // Carrying likes over is best-effort and must never turn a successful
+    // sign-in into a login error.
+    if (snapshot && snapshot.uid !== user.uid) {
+      try {
+        await migrateLikes(snapshot, user.uid, db);
+        console.log("✅ Likes migrated from anonymous session");
+      } catch (migrationError) {
+        console.error("❌ Likes migration error:", migrationError);
+        setMigrationNotice(MIGRATION_NOTICE);
+        setAuthFlowInProgress(false);
+        return;
+      }
+    }
+
+    setAuthFlowInProgress(false);
+    router.push("/liked-poem");
+  };
+
+  const handleGooglePopupError = async (
+    error: unknown,
+    provider: GoogleAuthProvider
+  ) => {
+    const code = getAuthErrorCode(error);
+
+    if (code && SILENT_GOOGLE_CODES.has(code)) {
+      setLoading(false);
+      setAuthFlowInProgress(false);
+      return;
+    }
+
+    if (code && GOOGLE_REDIRECT_FALLBACK_CODES.has(code)) {
+      // A redirect leaves the page, so the snapshot and a marker are parked
+      // here and only here. The marker lets the return path report a result
+      // that comes back empty instead of failing silently.
+      writeRedirectMarker();
+      if (!skipLikesMigrationRef.current && migrationSourceRef.current) {
         writePendingLikes(migrationSourceRef.current);
       }
 
-      // Use a full-page redirect rather than signInWithPopup().
-      //
-      // Popups are blocked or silently dropped in iOS Safari and in the
-      // in-app browsers used by Instagram/Threads/etc., which is exactly where
-      // a shared poem link tends to open. The redirect flow works in all of
-      // them; getRedirectResult() above finishes the sign-in and the likes
-      // migration when the page comes back.
-      console.log("🔐 Redirecting to Google...");
-      await signInWithRedirect(auth, provider);
-      // On success the browser navigates away; nothing below runs.
-    } catch (error: unknown) {
-      writePendingLikes(null);
-      setError(toShownAuthError(error));
-      setLoading(false);
+      try {
+        console.log("🔐 Falling back to a Google redirect...");
+        await signInWithRedirect(auth, provider);
+        // On success the browser navigates away; nothing below runs.
+      } catch (redirectError: unknown) {
+        writePendingLikes(null);
+        clearRedirectMarker();
+        setError(toShownAuthError(redirectError));
+        setLoading(false);
+        setAuthFlowInProgress(false);
+      }
+      return;
     }
+
+    // Includes auth/account-exists-with-different-credential: show what the
+    // map says and stop, since a redirect cannot resolve it.
+    setError(toShownAuthError(error));
+    setLoading(false);
+    setAuthFlowInProgress(false);
+  };
+
+  const handleGoogleSignIn = () => {
+    if (loading || !likesCaptureSettled) return;
+
+    setLoading(true);
+    setError(null);
+    setRedirectNotice(null);
+    setMigrationNotice(null);
+    setAuthFlowInProgress(true);
+
+    const provider = new GoogleAuthProvider();
+
+    // Force account selection and prevent auto-select
+    provider.setCustomParameters({
+      prompt: "select_account",
+    });
+
+    // Must stay synchronous: Safari refuses a popup that opens after an
+    // await. Everything the popup needs is already in memory by this point.
+    signInWithPopup(auth, provider)
+      .then((result) => handleGooglePopupSuccess(result.user))
+      .catch((error: unknown) => handleGooglePopupError(error, provider));
   };
 
   // Show loading state while checking auth
@@ -505,6 +656,18 @@ function LoginPageContent() {
               </div>
             )}
           </div>
+
+          {/* A redirect that came back with no user. Usually means the
+              provider handoff failed silently, so say so instead of leaving
+              the form looking untouched. */}
+          {redirectNotice && (
+            <div
+              role="status"
+              className="bg-gray-50 text-gray-600 border border-gray-200 rounded-xl p-4 text-center text-sm italic"
+            >
+              {redirectNotice}
+            </div>
+          )}
 
           {/* A successful sign-in whose likes migration failed. Navigation is
               held until this is dismissed so the note is actually seen. */}
@@ -682,8 +845,9 @@ function LoginPageContent() {
           {!isReset && (
           <button
             onClick={handleGoogleSignIn}
+            type="button"
             className="w-full py-3.5 bg-white text-gray-700 border border-gray-300 rounded-xl shadow-sm hover:shadow-md hover:bg-gray-50 hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-3 font-medium disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-            disabled={loading}
+            disabled={loading || !likesCaptureSettled}
           >
             {loading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
