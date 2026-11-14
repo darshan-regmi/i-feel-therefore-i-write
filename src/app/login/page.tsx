@@ -149,19 +149,17 @@ function LoginPageContent() {
 
         if (result?.user) {
           const snapshot = readPendingLikes();
+          writePendingLikes(null);
 
           if (snapshot && snapshot.uid !== result.user.uid) {
             try {
               await migrateLikes(snapshot, result.user.uid, db);
-              writePendingLikes(null);
               console.log("✅ Likes migrated from anonymous session");
             } catch (migrationError) {
               console.error("❌ Likes migration error:", migrationError);
               if (!cancelled) setMigrationNotice(MIGRATION_NOTICE);
               return;
             }
-          } else {
-            writePendingLikes(null);
           }
 
           if (!cancelled) {
@@ -303,12 +301,15 @@ function LoginPageContent() {
 
     setLoading(false);
 
+    // The snapshot is now in memory; never leave it around to be replayed onto
+    // a different account later in this tab.
+    writePendingLikes(null);
+
     // Authentication is finished. Carrying likes over is best-effort and must
     // never turn a successful sign-in into a login error.
     if (likesSnapshot && newUid && likesSnapshot.uid !== newUid) {
       try {
         await migrateLikes(likesSnapshot, newUid, db);
-        writePendingLikes(null);
         console.log("✅ Likes migrated from anonymous session");
       } catch (migrationError) {
         console.error("❌ Likes migration error:", migrationError);
