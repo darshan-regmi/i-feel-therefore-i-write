@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -10,10 +10,14 @@ import {
   onAuthStateChanged,
 } from "firebase/auth";
 import { EmailAuthProvider, linkWithCredential, sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Loader2, X } from "lucide-react";
-import { migrateLikes } from "@/utils/firebaseUtils";
+import {
+  migrateLikes,
+  type AnonymousLikesSnapshot,
+} from "@/utils/firebaseUtils";
+import { getUserLikedPoems } from "@/lib/likes";
 import {
   reportAuthError,
   SHOW_AUTH_ERROR_CODE,
@@ -37,25 +41,35 @@ const RESET_CONFIRMATION =
   "If that address has a home here, the letter is on its way.";
 const RESET_COOLDOWN_SECONDS = 60;
 
-// The Google flow leaves the page entirely, so the uid whose likes still need
-// migrating is parked in sessionStorage until the redirect comes back.
-const PENDING_ANON_UID_KEY = "pendingAnonUid";
+// The Google flow leaves the page entirely, so the anonymous snapshot is
+// parked in sessionStorage until the redirect comes back.
+const PENDING_LIKES_KEY = "pendingAnonLikes";
 
-function readPendingAnonUid(): string | null {
+function readPendingLikes(): AnonymousLikesSnapshot | null {
   try {
-    return sessionStorage.getItem(PENDING_ANON_UID_KEY);
+    const raw = sessionStorage.getItem(PENDING_LIKES_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<AnonymousLikesSnapshot>;
+    if (
+      typeof parsed.uid !== "string" ||
+      !Array.isArray(parsed.poemIds) ||
+      !parsed.poemIds.every((id) => typeof id === "string")
+    ) {
+      return null;
+    }
+    return { uid: parsed.uid, poemIds: parsed.poemIds };
   } catch {
     // Storage can be unavailable in private/locked-down browsing modes.
     return null;
   }
 }
 
-function writePendingAnonUid(uid: string | null) {
+function writePendingLikes(snapshot: AnonymousLikesSnapshot | null) {
   try {
-    if (uid) {
-      sessionStorage.setItem(PENDING_ANON_UID_KEY, uid);
+    if (snapshot) {
+      sessionStorage.setItem(PENDING_LIKES_KEY, JSON.stringify(snapshot));
     } else {
-      sessionStorage.removeItem(PENDING_ANON_UID_KEY);
+      sessionStorage.removeItem(PENDING_LIKES_KEY);
     }
   } catch {
     // Ignore — the sign-in still works, only the likes migration is skipped.
@@ -111,6 +125,14 @@ function LoginPageContent() {
   const isLogin = mode === "login";
   const isReset = mode === "reset";
 
+  // Started on the first auth callback (page mount), long before any sign-in
+  // call, because the old rows stop being readable once the uid changes.
+  const migrationSourceRef = useRef<AnonymousLikesSnapshot | null>(null);
+  const migrationSourcePromiseRef = useRef<
+    Promise<AnonymousLikesSnapshot | null> | null
+  >(null);
+  const captureStartedRef = useRef(false);
+
   // Finish a Google sign-in that came back from a redirect.
   //
   // signInWithRedirect replaces the page, so the anonymous uid is recovered
@@ -126,18 +148,20 @@ function LoginPageContent() {
         const result = await getRedirectResult(auth);
 
         if (result?.user) {
-          const anonUid = readPendingAnonUid();
-          writePendingAnonUid(null);
+          const snapshot = readPendingLikes();
 
-          if (anonUid && anonUid !== result.user.uid) {
+          if (snapshot && snapshot.uid !== result.user.uid) {
             try {
-              await migrateLikes(anonUid, result.user.uid);
+              await migrateLikes(snapshot, result.user.uid, db);
+              writePendingLikes(null);
               console.log("✅ Likes migrated from anonymous session");
             } catch (migrationError) {
               console.error("❌ Likes migration error:", migrationError);
               if (!cancelled) setMigrationNotice(MIGRATION_NOTICE);
               return;
             }
+          } else {
+            writePendingLikes(null);
           }
 
           if (!cancelled) {
@@ -146,7 +170,7 @@ function LoginPageContent() {
           }
         }
       } catch (error: unknown) {
-        writePendingAnonUid(null);
+        writePendingLikes(null);
         if (!cancelled) {
           setError(toShownAuthError(error));
         }
@@ -166,6 +190,27 @@ function LoginPageContent() {
   // Check if user is already logged in (not anonymous)
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      // Capture the anonymous session on the first callback, before any
+      // sign-in can replace it. The promise lets the email handler wait for
+      // the read instead of racing it.
+      if (!captureStartedRef.current) {
+        captureStartedRef.current = true;
+        migrationSourcePromiseRef.current = (async () => {
+          if (!user?.isAnonymous) return null;
+
+          try {
+            const poemIds = await getUserLikedPoems(user.uid);
+            const snapshot = { uid: user.uid, poemIds };
+            migrationSourceRef.current = snapshot;
+            writePendingLikes(snapshot);
+            return snapshot;
+          } catch (error) {
+            console.error("❌ Could not capture anonymous likes:", error);
+            return null;
+          }
+        })();
+      }
+
       setAuthInitialized(true);
 
       // If user is authenticated (not anonymous), redirect to liked poems.
@@ -214,12 +259,15 @@ function LoginPageContent() {
     setMigrationNotice(null);
     setAuthFlowInProgress(true);
 
-    let anonUid: string | null = null;
+    // Wait for the mount-time capture to finish so the old likes are read
+    // while the anonymous session still owns them.
+    const likesSnapshot =
+      (await migrationSourcePromiseRef.current) ?? migrationSourceRef.current;
+
     let newUid: string | null = null;
 
     try {
       const currentUser = auth.currentUser;
-      anonUid = currentUser?.isAnonymous ? currentUser.uid : null;
 
       if (mode === "signup") {
         // Sign Up
@@ -257,9 +305,10 @@ function LoginPageContent() {
 
     // Authentication is finished. Carrying likes over is best-effort and must
     // never turn a successful sign-in into a login error.
-    if (anonUid && newUid && anonUid !== newUid) {
+    if (likesSnapshot && newUid && likesSnapshot.uid !== newUid) {
       try {
-        await migrateLikes(anonUid, newUid);
+        await migrateLikes(likesSnapshot, newUid, db);
+        writePendingLikes(null);
         console.log("✅ Likes migrated from anonymous session");
       } catch (migrationError) {
         console.error("❌ Likes migration error:", migrationError);
@@ -337,14 +386,12 @@ function LoginPageContent() {
         prompt: "select_account",
       });
 
-      const currentUser = auth.currentUser;
-
-      // Liking a poem signs the visitor in anonymously, so by the time they
-      // reach /login there is usually an anonymous currentUser. Park its uid
-      // so the redirect handler can carry those likes onto the Google account
-      // once we come back. This replaces the old linkWithPopup() approach,
-      // which only worked when the Google account did not already exist.
-      writePendingAnonUid(currentUser?.isAnonymous ? currentUser.uid : null);
+      // The anonymous snapshot was read on mount, before this click. Persist
+      // that already-captured copy so the redirect return can migrate it; this
+      // handler must never read Firestore itself.
+      if (migrationSourceRef.current) {
+        writePendingLikes(migrationSourceRef.current);
+      }
 
       // Use a full-page redirect rather than signInWithPopup().
       //
@@ -357,7 +404,7 @@ function LoginPageContent() {
       await signInWithRedirect(auth, provider);
       // On success the browser navigates away; nothing below runs.
     } catch (error: unknown) {
-      writePendingAnonUid(null);
+      writePendingLikes(null);
       setError(toShownAuthError(error));
       setLoading(false);
     }

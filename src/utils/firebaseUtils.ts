@@ -1,39 +1,54 @@
 import {
-  collection,
-  getDocs,
-  addDoc,
-  query,
-  where,
+  doc,
+  writeBatch,
+  type Firestore,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 
-export async function migrateLikes(fromUID: string, toUID: string) {
-  if (fromUID === toUID) return;
+const LIKES_COLLECTION = "likes";
 
-  const likesRef = collection(db, "likes");
-  const fromLikesQ = query(likesRef, where("userId", "==", fromUID));
-  const fromLikesSnap = await getDocs(fromLikesQ);
+/**
+ * The anonymous session whose likes should follow the visitor into a real
+ * account. Capture this before signing in: the rules only let you read your own
+ * likes, so after the uid changes the old rows are no longer readable.
+ */
+export type AnonymousLikesSnapshot = {
+  uid: string;
+  poemIds: string[];
+};
 
-  const toLikesQ = query(likesRef, where("userId", "==", toUID));
-  const toLikesSnap = await getDocs(toLikesQ);
+/**
+ * Copy an anonymous visitor's likes onto their new account.
+ *
+ * One idempotent `set` per poem, with the doc id the rules require. The old
+ * anonymous docs are deliberately left in place: only their owner can delete
+ * them, and they already contributed to the poem's stored like counter, so
+ * touching the counter here would count each migrated like twice.
+ *
+ * Returns the number of likes written.
+ */
+export async function migrateLikes(
+  snapshot: AnonymousLikesSnapshot,
+  toUID: string,
+  store: Firestore
+): Promise<number> {
+  const { uid: fromUID, poemIds } = snapshot;
 
-  // Create a Set of existing poemIds for toUID
-  const toLikedPoemIds = new Set(
-    toLikesSnap.docs.map((doc) => doc.data().poemId)
-  );
+  if (fromUID === toUID || poemIds.length === 0) return 0;
 
-  const migrateOps = fromLikesSnap.docs.map(async (docSnap) => {
-    const { poemId, timestamp } = docSnap.data();
+  const batch = writeBatch(store);
 
-    if (!toLikedPoemIds.has(poemId)) {
-      await addDoc(likesRef, {
-        poemId,
-        userId: toUID,
-        timestamp,
-      });
-    }
-  });
+  for (const poemId of poemIds) {
+    // The rules require likes/{poemId}_{uid} with a matching userId and a
+    // timestamp, so `set` works both for new likes and for reruns.
+    batch.set(doc(store, LIKES_COLLECTION, `${poemId}_${toUID}`), {
+      poemId,
+      userId: toUID,
+      timestamp: new Date(),
+    });
+  }
 
-  await Promise.all(migrateOps);
-  console.log(`✅ Migrated ${migrateOps.length} likes from ${fromUID} → ${toUID}`);
+  await batch.commit();
+  console.log(`✅ Migrated ${poemIds.length} likes from ${fromUID} → ${toUID}`);
+
+  return poemIds.length;
 }
