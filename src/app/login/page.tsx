@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -9,9 +9,9 @@ import {
   GoogleAuthProvider,
   onAuthStateChanged,
 } from "firebase/auth";
-import { EmailAuthProvider, linkWithCredential } from "firebase/auth";
+import { EmailAuthProvider, linkWithCredential, sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Loader2, X } from "lucide-react";
 import { migrateLikes } from "@/utils/firebaseUtils";
 import {
@@ -30,6 +30,12 @@ type FieldErrors = {
   email?: string;
   password?: string;
 };
+
+type Mode = "login" | "signup" | "reset";
+
+const RESET_CONFIRMATION =
+  "If that address has a home here, the letter is on its way.";
+const RESET_COOLDOWN_SECONDS = 60;
 
 // The Google flow leaves the page entirely, so the uid whose likes still need
 // migrating is parked in sessionStorage until the redirect comes back.
@@ -63,8 +69,32 @@ function toShownAuthError(error: unknown): AuthErrorInfo | null {
   return info.message ? info : null;
 }
 
+// useSearchParams needs a Suspense boundary so the page can still be
+// prerendered at build time.
 export default function LoginPage() {
-  const [isLogin, setIsLogin] = useState(true);
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-slate-50">
+          <div className="text-center space-y-4">
+            <Loader2 className="w-8 h-8 text-gray-400 animate-spin mx-auto" />
+            <p className="text-sm text-gray-500 italic">
+              checking authentication...
+            </p>
+          </div>
+        </div>
+      }
+    >
+      <LoginPageContent />
+    </Suspense>
+  );
+}
+
+function LoginPageContent() {
+  const searchParams = useSearchParams();
+  const [mode, setMode] = useState<Mode>(() =>
+    searchParams.get("mode") === "reset" ? "reset" : "login"
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -75,7 +105,11 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [authInitialized, setAuthInitialized] = useState(false);
   const [redirectResolved, setRedirectResolved] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
   const router = useRouter();
+  const isLogin = mode === "login";
+  const isReset = mode === "reset";
 
   // Finish a Google sign-in that came back from a redirect.
   //
@@ -166,7 +200,7 @@ export default function LoginPage() {
 
     if (!password) {
       nextFieldErrors.password = "Enter your password.";
-    } else if (!isLogin && password.length < MIN_PASSWORD_LENGTH) {
+    } else if (mode === "signup" && password.length < MIN_PASSWORD_LENGTH) {
       nextFieldErrors.password = `Use at least ${MIN_PASSWORD_LENGTH} characters.`;
     }
 
@@ -187,7 +221,7 @@ export default function LoginPage() {
       const currentUser = auth.currentUser;
       anonUid = currentUser?.isAnonymous ? currentUser.uid : null;
 
-      if (!isLogin) {
+      if (mode === "signup") {
         // Sign Up
         if (currentUser && currentUser.isAnonymous) {
           // Link anonymous account with email/password
@@ -237,6 +271,58 @@ export default function LoginPage() {
 
     setAuthFlowInProgress(false);
     router.push("/liked-poem");
+  };
+
+  // Reset emails deliberately give the same answer whether or not the account
+  // exists, so this page cannot be used to enumerate addresses.
+  const handleResetAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const trimmedEmail = email.trim();
+    const nextFieldErrors: FieldErrors = {};
+
+    if (!trimmedEmail) {
+      nextFieldErrors.email = "Enter your email address.";
+    } else if (!EMAIL_RE.test(trimmedEmail)) {
+      nextFieldErrors.email =
+        "That doesn't look like an email address. Check for a typo.";
+    }
+
+    setFieldErrors(nextFieldErrors);
+    if (Object.keys(nextFieldErrors).length > 0) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      await sendPasswordResetEmail(auth, trimmedEmail);
+    } catch (error: unknown) {
+      const info = reportAuthError(error);
+      if (info.code !== "auth/user-not-found") {
+        setError(info.message ? info : null);
+        setLoading(false);
+        return;
+      }
+    }
+
+    setResetSent(true);
+    setCooldown(RESET_COOLDOWN_SECONDS);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setTimeout(() => setCooldown((seconds) => seconds - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [cooldown]);
+
+  const switchMode = (next: Mode) => {
+    setMode(next);
+    setError(null);
+    setFieldErrors({});
+    setResetSent(false);
   };
 
   const handleGoogleSignIn = async () => {
@@ -310,7 +396,11 @@ export default function LoginPage() {
               i feel, therefore i write
             </h1>
             <p className="text-sm font-light italic text-gray-500">
-              {isLogin ? "welcome back home" : "let's make you a home here"}
+              {mode === "login"
+                ? "welcome back home"
+                : mode === "signup"
+                  ? "let's make you a home here"
+                  : "a new key for your home"}
             </p>
           </div>
 
@@ -352,7 +442,11 @@ export default function LoginPage() {
           )}
 
           {/* Form */}
-          <form onSubmit={handleEmailAuth} className="space-y-5">
+          <form
+            onSubmit={isReset ? handleResetAuth : handleEmailAuth}
+            noValidate
+            className="space-y-5"
+          >
             <div>
               <label
                 htmlFor="email"
@@ -384,6 +478,7 @@ export default function LoginPage() {
               )}
             </div>
 
+            {!isReset && (
             <div>
               <label
                 htmlFor="password"
@@ -434,17 +529,46 @@ export default function LoginPage() {
                 </p>
               )}
             </div>
+            )}
+
+            {isLogin && (
+              <div className="text-right -mt-3">
+                <button
+                  type="button"
+                  onClick={() => switchMode("reset")}
+                  className="text-sm italic text-gray-500 hover:text-gray-900 transition-colors duration-200 disabled:opacity-60"
+                  disabled={loading}
+                >
+                  forgot your password?
+                </button>
+              </div>
+            )}
+
+            {isReset && resetSent && (
+              <div
+                role="status"
+                className="bg-gray-50 text-gray-600 border border-gray-200 rounded-xl p-4 text-center text-sm italic"
+              >
+                {RESET_CONFIRMATION}
+              </div>
+            )}
 
             <button
               type="submit"
               className="w-full py-3.5 bg-gray-900 text-white font-medium rounded-xl shadow-md hover:shadow-lg hover:bg-gray-800 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2"
-              disabled={loading}
+              disabled={loading || (isReset && cooldown > 0)}
             >
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Opening doors...</span>
+                  <span>{isReset ? "Sending..." : "Opening doors..."}</span>
                 </>
+              ) : isReset ? (
+                cooldown > 0
+                  ? `send again in ${cooldown}s`
+                  : resetSent
+                    ? "Send another letter"
+                    : "Send the reset letter"
               ) : isLogin ? (
                 "Enter Your Home"
               ) : (
@@ -454,6 +578,7 @@ export default function LoginPage() {
           </form>
 
           {/* Divider */}
+          {!isReset && (
           <div className="relative text-center">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-200"></div>
@@ -462,8 +587,10 @@ export default function LoginPage() {
               or
             </span>
           </div>
+          )}
 
           {/* Google Sign In */}
+          {!isReset && (
           <button
             onClick={handleGoogleSignIn}
             className="w-full py-3.5 bg-white text-gray-700 border border-gray-300 rounded-xl shadow-sm hover:shadow-md hover:bg-gray-50 hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-3 font-medium disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
@@ -493,28 +620,38 @@ export default function LoginPage() {
             )}
             <span>Continue with Google</span>
           </button>
+          )}
 
-          {/* Toggle login/signup */}
+          {/* Toggle login/signup, or the way back from reset */}
           <div className="text-center pt-2">
-            <button
-              type="button"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setError(null);
-                setFieldErrors({});
-              }}
-              className="text-gray-500 hover:text-gray-900 italic text-sm transition-colors duration-200 disabled:opacity-60"
-              disabled={loading}
-            >
-              {isLogin ? "need an account?" : "already have an account?"}
-            </button>
+            {isReset ? (
+              <button
+                type="button"
+                onClick={() => switchMode("login")}
+                className="text-gray-500 hover:text-gray-900 italic text-sm transition-colors duration-200 disabled:opacity-60"
+                disabled={loading}
+              >
+                back to sign in
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => switchMode(isLogin ? "signup" : "login")}
+                className="text-gray-500 hover:text-gray-900 italic text-sm transition-colors duration-200 disabled:opacity-60"
+                disabled={loading}
+              >
+                {isLogin ? "need an account?" : "already have an account?"}
+              </button>
+            )}
           </div>
 
           {/* Footer quote */}
           <div className="text-center text-xs italic text-gray-400 border-t border-gray-100 pt-6 mt-6">
-            {isLogin
+            {mode === "login"
               ? '"words have no single fixed meaning"'
-              : '"every poet was first a reader"'}
+              : mode === "signup"
+                ? '"every poet was first a reader"'
+                : '"a key, remembered in a quieter place"'}
           </div>
         </div>
 
