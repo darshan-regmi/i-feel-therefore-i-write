@@ -2,15 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { resetAuthCache } from "@/lib/likes";
+import { useLikedPoems } from "@/components/LikedPoemsProvider";
 import Link from "next/link";
 import PoemsWrapper from "@/components/PoemsWrapper_1";
 
 export default function LikedPoemPage() {
   const [poems, setPoems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [signingOut, setSigningOut] = useState(false);
   const router = useRouter();
+  const likedPoems = useLikedPoems();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -39,6 +43,23 @@ export default function LikedPoemPage() {
 
     return () => unsubscribe();
   }, [router]);
+
+  const handleSignOut = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+
+    try {
+      await signOut(auth);
+      // The cached uid belongs to the signed-out session; without this the
+      // next visitor would keep using it for like lookups.
+      resetAuthCache();
+      likedPoems?.clearLikes();
+      router.push("/login");
+    } catch (error) {
+      console.error("Sign out failed:", error);
+      setSigningOut(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -100,6 +121,15 @@ export default function LikedPoemPage() {
             </span>
             <span className="font-medium">back to poems</span>
           </Link>
+
+          <button
+            type="button"
+            onClick={handleSignOut}
+            disabled={signingOut}
+            className="text-sm italic text-gray-500 hover:text-gray-900 transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {signingOut ? "signing out..." : "sign out"}
+          </button>
         </nav>
 
         {/* Header */}
