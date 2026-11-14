@@ -8,6 +8,8 @@ import {
   getRedirectResult,
   GoogleAuthProvider,
   onAuthStateChanged,
+  sendEmailVerification,
+  type User,
 } from "firebase/auth";
 import { EmailAuthProvider, linkWithCredential, sendPasswordResetEmail } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
@@ -269,11 +271,14 @@ function LoginPageContent() {
 
       if (mode === "signup") {
         // Sign Up
+        let signedUpUser: User;
+
         if (currentUser && currentUser.isAnonymous) {
           // Link anonymous account with email/password
           const credential = EmailAuthProvider.credential(trimmedEmail, password);
           const result = await linkWithCredential(currentUser, credential);
 
+          signedUpUser = result.user;
           newUid = result.user.uid;
           console.log("✅ Anonymous account linked with email");
         } else {
@@ -283,9 +288,16 @@ function LoginPageContent() {
             trimmedEmail,
             password
           );
+          signedUpUser = result.user;
           newUid = result.user.uid;
           console.log("✅ New account created");
         }
+
+        // Sent without being awaited: a mail failure must not undo a sign-up
+        // that already succeeded, and the visit should not wait on the network.
+        sendEmailVerification(signedUpUser).catch((error: unknown) => {
+          console.error("Could not send verification email:", error);
+        });
       } else {
         // Sign In
         const result = await signInWithEmailAndPassword(auth, trimmedEmail, password);
@@ -506,6 +518,7 @@ function LoginPageContent() {
                 type="email"
                 id="email"
                 value={email}
+                autoComplete="email"
                 onChange={(e) => {
                   setEmail(e.target.value);
                   if (fieldErrors.email) {
@@ -539,6 +552,7 @@ function LoginPageContent() {
                   type={showPassword ? "text" : "password"}
                   id="password"
                   value={password}
+                  autoComplete={isLogin ? "current-password" : "new-password"}
                   onChange={(e) => {
                     setPassword(e.target.value);
                     if (fieldErrors.password) {
