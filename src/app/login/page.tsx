@@ -43,6 +43,10 @@ const RESET_CONFIRMATION =
   "If that address has a home here, the letter is on its way.";
 const RESET_COOLDOWN_SECONDS = 60;
 
+// Firebase can fail to call back at all (blocked storage, a stalled redirect
+// result, an in-app webview). The form must not stay behind the spinner.
+const AUTH_STARTUP_TIMEOUT_MS = 5000;
+
 // The Google flow leaves the page entirely, so the anonymous snapshot is
 // parked in sessionStorage until the redirect comes back.
 const PENDING_LIKES_KEY = "pendingAnonLikes";
@@ -127,6 +131,11 @@ function LoginPageContent() {
   const isLogin = mode === "login";
   const isReset = mode === "reset";
 
+  // Read by the startup timeout so it can tell whether the time was really
+  // needed, without closing over stale state.
+  const authInitializedRef = useRef(false);
+  const redirectResolvedRef = useRef(false);
+
   // Started on the first auth callback (page mount), long before any sign-in
   // call, because the old rows stop being readable once the uid changes.
   const migrationSourceRef = useRef<AnonymousLikesSnapshot | null>(null);
@@ -134,6 +143,22 @@ function LoginPageContent() {
     Promise<AnonymousLikesSnapshot | null> | null
   >(null);
   const captureStartedRef = useRef(false);
+
+  // Escape hatch for a startup that never settles. Auth still keeps running in
+  // the background; this only opens the gate so the form is usable.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (authInitializedRef.current && redirectResolvedRef.current) return;
+
+      console.warn(
+        `Auth startup did not settle within ${AUTH_STARTUP_TIMEOUT_MS / 1000}s; showing the login form anyway.`
+      );
+      setAuthInitialized(true);
+      setRedirectResolved(true);
+    }, AUTH_STARTUP_TIMEOUT_MS);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // Finish a Google sign-in that came back from a redirect.
   //
@@ -176,6 +201,7 @@ function LoginPageContent() {
         }
       } finally {
         if (!cancelled) {
+          redirectResolvedRef.current = true;
           setRedirectResolved(true);
           setAuthFlowInProgress(false);
         }
@@ -211,6 +237,7 @@ function LoginPageContent() {
         })();
       }
 
+      authInitializedRef.current = true;
       setAuthInitialized(true);
 
       // If user is authenticated (not anonymous), redirect to liked poems.
