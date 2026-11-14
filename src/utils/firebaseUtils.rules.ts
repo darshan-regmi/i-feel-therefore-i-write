@@ -69,6 +69,50 @@ describe("like migration", () => {
     }
   });
 
+  it("writes only the likes the account does not already have", async () => {
+    const existingTimestamp = new Date("2020-01-01T00:00:00.000Z");
+
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const adminDb = context.firestore();
+      await setDoc(doc(adminDb, "poems", "poem-a"), { likes: 1 });
+      await setDoc(doc(adminDb, "poems", "poem-b"), { likes: 1 });
+      await setDoc(doc(adminDb, "likes", `poem-a_${NEW_UID}`), {
+        poemId: "poem-a",
+        userId: NEW_UID,
+        timestamp: existingTimestamp,
+      });
+    });
+
+    const userDb = testEnv.authenticatedContext(NEW_UID).firestore();
+
+    const written = await migrateLikes(
+      { uid: OLD_UID, poemIds: POEM_IDS },
+      NEW_UID,
+      userDb as unknown as Firestore
+    );
+
+    expect(written).toBe(1);
+
+    const alreadyThere = await getDoc(
+      doc(userDb, "likes", `poem-a_${NEW_UID}`)
+    );
+    expect(alreadyThere.data()?.timestamp.toDate().toISOString()).toBe(
+      existingTimestamp.toISOString()
+    );
+
+    const migrated = await getDoc(doc(userDb, "likes", `poem-b_${NEW_UID}`));
+    expect(migrated.exists()).toBe(true);
+
+    // A second run finds everything present and commits no batch at all.
+    await expect(
+      migrateLikes(
+        { uid: OLD_UID, poemIds: POEM_IDS },
+        NEW_UID,
+        userDb as unknown as Firestore
+      )
+    ).resolves.toBe(0);
+  });
+
   it("cannot write a like doc for another user", async () => {
     const intruderDb = testEnv.authenticatedContext("someone-else").firestore();
 

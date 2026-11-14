@@ -1,5 +1,6 @@
 import {
   doc,
+  getDoc,
   writeBatch,
   type Firestore,
 } from "firebase/firestore";
@@ -19,10 +20,13 @@ export type AnonymousLikesSnapshot = {
 /**
  * Copy an anonymous visitor's likes onto their new account.
  *
- * One idempotent `set` per poem, with the doc id the rules require. The old
- * anonymous docs are deliberately left in place: only their owner can delete
- * them, and they already contributed to the poem's stored like counter, so
- * touching the counter here would count each migrated like twice.
+ * Reads `${poemId}_${toUID}` first because the rules deny updates: `set` on an
+ * existing like would count as an update and reject the whole batch. Only
+ * missing likes are written, so a rerun after a partial success is safe.
+ *
+ * The old anonymous docs are deliberately left in place: only their owner can
+ * delete them, and they already contributed to the poem's stored like counter,
+ * so touching the counter here would count each migrated like twice.
  *
  * Returns the number of likes written.
  */
@@ -35,11 +39,25 @@ export async function migrateLikes(
 
   if (fromUID === toUID || poemIds.length === 0) return 0;
 
+  const uniquePoemIds = Array.from(new Set(poemIds));
+
+  const existing = await Promise.all(
+    uniquePoemIds.map((poemId) =>
+      getDoc(doc(store, LIKES_COLLECTION, `${poemId}_${toUID}`))
+    )
+  );
+
+  const missingPoemIds = uniquePoemIds.filter(
+    (_poemId, index) => !existing[index].exists()
+  );
+
+  if (missingPoemIds.length === 0) return 0;
+
   const batch = writeBatch(store);
 
-  for (const poemId of poemIds) {
+  for (const poemId of missingPoemIds) {
     // The rules require likes/{poemId}_{uid} with a matching userId and a
-    // timestamp, so `set` works both for new likes and for reruns.
+    // timestamp. These docs are known to be absent, so this is a create.
     batch.set(doc(store, LIKES_COLLECTION, `${poemId}_${toUID}`), {
       poemId,
       userId: toUID,
@@ -48,7 +66,9 @@ export async function migrateLikes(
   }
 
   await batch.commit();
-  console.log(`✅ Migrated ${poemIds.length} likes from ${fromUID} → ${toUID}`);
+  console.log(
+    `✅ Migrated ${missingPoemIds.length} likes from ${fromUID} → ${toUID}`
+  );
 
-  return poemIds.length;
+  return missingPoemIds.length;
 }
