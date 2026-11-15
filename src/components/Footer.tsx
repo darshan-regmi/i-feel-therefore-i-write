@@ -3,7 +3,6 @@ import {
   FaGlobe,
   FaGithub,
   FaLinkedin,
-  FaTwitter,
   FaInstagram,
 } from "react-icons/fa";
 
@@ -22,16 +21,10 @@ const Footer: React.FC = () => {
       hoverColor: "hover:text-gray-900",
     },
     {
-      href: "https://www.linkedin.com/in/darshan-regmi-b08b7823b/",
+      href: "https://www.linkedin.com/in/darshan-regmi/",
       icon: FaLinkedin,
       label: "LinkedIn",
       hoverColor: "hover:text-blue-700",
-    },
-    {
-      href: "https://x.com/Regmi6Darshan",
-      icon: FaTwitter,
-      label: "Twitter",
-      hoverColor: "hover:text-sky-500",
     },
     {
       href: "https://www.instagram.com/_darshan_regmi",

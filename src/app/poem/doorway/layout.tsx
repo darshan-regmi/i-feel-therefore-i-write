@@ -23,8 +23,6 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: `${TITLE} | i feel, therefore i write`,
     description: DESCRIPTION,
-    site: "@Regmi6Darshan",
-    creator: "@Regmi6Darshan",
     images: [`${SITE_URL}/default-og-image.png`],
   },
 };
