@@ -33,7 +33,6 @@ export interface Poem {
 // Cache configuration
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 const poemCache = new Map<string, { poem: Poem; timestamp: number }>();
-const allPoemsCache: { poems: Poem[]; timestamp: number } | null = null;
 
 // Helper function to check cache validity
 function isCacheValid(timestamp: number): boolean {
@@ -86,16 +85,24 @@ async function queryDatabase(
  */
 function extractPoemFromPage(page: PageObjectResponse): Poem {
   try {
+    // A Notion rich-text property is split into several segments once it
+    // passes its per-segment limit. Join every segment so long poems are not
+    // truncated, then leave the text exactly as written.
     const title =
-      page.properties.Title?.type === 'title' && page.properties.Title.title[0]
-        ? page.properties.Title.title[0].plain_text
+      page.properties.Title?.type === 'title' &&
+      page.properties.Title.title.length > 0
+        ? page.properties.Title.title
+            .map((part) => part.plain_text)
+            .join('')
+            .trim()
         : 'Untitled';
 
-    const content =
-      page.properties.Content?.type === 'rich_text' &&
-      page.properties.Content.rich_text[0]
-        ? page.properties.Content.rich_text[0].plain_text
-        : '(No content)';
+    const contentParts =
+      page.properties.Content?.type === 'rich_text'
+        ? page.properties.Content.rich_text
+        : [];
+
+    const content = contentParts.map((part) => part.plain_text).join('');
 
     // Optional hand-written meta description. Notion property name: "Description"
     // (rich_text). Falls back to null so callers can substring `content` instead.
@@ -115,8 +122,8 @@ function extractPoemFromPage(page: PageObjectResponse): Poem {
 
     return {
       id: page.id,
-      title: title.trim(),
-      content: content.trim(),
+      title: title || 'Untitled',
+      content: content || '(No content)',
       description: descriptionProp && descriptionProp.length > 0 ? descriptionProp : null,
       createdAt: createdAtProp ?? page.created_time,
       updatedAt: page.last_edited_time,

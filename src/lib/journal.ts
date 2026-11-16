@@ -17,14 +17,14 @@ const monthFormatter = new Intl.DateTimeFormat("en-GB", {
 });
 
 const longDateFormatter = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
+  day: "2-digit",
   month: "short",
   year: "numeric",
   timeZone: SITE_TIMEZONE,
 });
 
 const shortDateFormatter = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
+  day: "2-digit",
   month: "short",
   timeZone: SITE_TIMEZONE,
 });
