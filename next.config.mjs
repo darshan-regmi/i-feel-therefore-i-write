@@ -17,6 +17,13 @@ const nextConfig = {
   experimental: {
     serverActions: {},
   },
+  async redirects() {
+    return [
+      // The journal's canonical list lives at /entries now.
+      { source: "/poem", destination: "/entries", permanent: true },
+      { source: "/about-the-author", destination: "/about", permanent: true },
+    ]
+  },
 }
 
 export default withBundleAnalyzer(nextConfig)

@@ -417,7 +417,7 @@
 }
 
 .entries-list {
-  margin-top: 2rem;
+  margin-top: 0;
 }
 
 .section-gap {
@@ -512,4 +512,24 @@
   .index-row:not(.index-row--with-action) {
     grid-template-columns: 5.5rem minmax(0, 1fr);
   }
+}
+
+/* ---------------------------------------------------------------------------
+   About / entries extras
+--------------------------------------------------------------------------- */
+
+.entries-meta {
+  margin: 0.75rem 0 0;
+}
+
+.about-copy p {
+  margin: 0;
+}
+
+.about-copy p + p {
+  margin-top: 1.75rem;
+}
+
+.about-books {
+  margin-top: 3.5rem;
 }
