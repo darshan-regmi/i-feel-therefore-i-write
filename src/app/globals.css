@@ -1,33 +1,515 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #ffffff;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-
-  /* /qwzx — the confessional */
-  --color-void: #0b0a0a;
-  --color-bone: #e9e2d0;
-  --color-acid: #c6ff3d;
-  --color-bruise: #3b1d5a;
-  --color-blood: #ff2e3f;
+  --paper: #f6f1e7;
+  --ink: #2a2520;
+  --faded: #6f675b;
+  --error: #9a3b2b;
+  color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #ffffff;
-    --foreground: #ededed;
+    --paper: #1b1815;
+    --ink: #e9e1d2;
+    --faded: #8f8678;
+    --error: #e08b78;
+    color-scheme: dark;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@theme inline {
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-faded: var(--faded);
+  --color-error: var(--error);
+
+  --font-serif: var(--font-newsreader);
+  --font-mono: var(--font-plex-mono);
+}
+
+@layer base {
+  html {
+    background: var(--paper);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    min-height: 100dvh;
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-newsreader), Georgia, "Times New Roman", serif;
+    font-size: 1.25rem;
+    line-height: 1.75;
+    text-transform: lowercase;
+    text-rendering: optimizeLegibility;
+  }
+
+  input,
+  textarea,
+  select {
+    text-transform: none;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+
+  button {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 3px;
+  }
+
+  ::selection {
+    background: rgba(42, 37, 32, 0.2);
+    background: color-mix(in srgb, var(--ink) 20%, transparent);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Layout
+--------------------------------------------------------------------------- */
+
+.page-shell {
+  width: 100%;
+  max-width: 34rem;
+  margin-inline: auto;
+  padding: 6rem 1.5rem 4rem;
+}
+
+.site-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 4rem;
+}
+
+.back-link {
+  color: var(--ink);
+  font-size: 1rem;
+  line-height: 1.5;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.site-title {
+  color: var(--faded);
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  text-align: right;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.plain-link {
+  text-decoration: none;
+}
+
+.plain-link:hover {
+  color: var(--faded);
+}
+
+/* ---------------------------------------------------------------------------
+   Type
+--------------------------------------------------------------------------- */
+
+.page-title {
+  font-size: 1.75rem;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.page-intro {
+  color: var(--faded);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  margin: 0.75rem 0 0;
+}
+
+.meta {
+  color: var(--faded);
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+}
+
+.muted {
+  color: var(--faded);
+}
+
+.error-text {
+  color: var(--error);
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  margin: 0.5rem 0 0;
+}
+
+.no-lowercase {
+  text-transform: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Index rows
+--------------------------------------------------------------------------- */
+
+.index-row {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  column-gap: 1rem;
+  align-items: baseline;
+  min-height: 44px;
+  padding-block: 0.5rem;
+}
+
+.index-row--home {
+  grid-template-columns: 6rem minmax(0, 1fr);
+}
+
+.index-row--with-action {
+  grid-template-columns: 6.5rem minmax(0, 1fr) auto;
+}
+
+.index-row--home.index-row--with-action {
+  grid-template-columns: 6rem minmax(0, 1fr) auto;
+}
+
+.index-meta {
+  white-space: nowrap;
+}
+
+.index-title {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.index-action {
+  padding-left: 1rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.index-link {
+  display: inline-block;
+  min-height: 44px;
+  padding-block: 0.35rem;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.index-link:hover {
+  color: var(--faded);
+}
+
+.index-footnote {
+  margin-top: 3.5rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Buttons
+--------------------------------------------------------------------------- */
+
+.text-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.text-button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.text-button--plain {
+  text-decoration: none;
+}
+
+.text-button--plain:hover {
+  color: var(--faded);
+}
+
+.text-button--error {
+  color: var(--error);
+}
+
+.text-button--filled {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 8px 28px;
+  min-height: 44px;
+  text-decoration: none;
+  border-radius: 0;
+}
+
+.text-button--filled:hover {
+  text-decoration: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Forms
+--------------------------------------------------------------------------- */
+
+.auth-form {
+  width: 100%;
+  max-width: 22.5rem;
+  margin-top: 3rem;
+}
+
+.form-field {
+  margin-bottom: 1.75rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.375rem;
+}
+
+.field-input {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.35rem 0;
+  border: 0;
+  border-bottom: 1px solid var(--faded);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  line-height: 1.5;
+}
+
+.field-input:focus {
+  border-bottom-color: var(--ink);
+  outline: none;
+}
+
+.field-input:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.auth-submit {
+  margin-top: 2.5rem;
+}
+
+.auth-separator {
+  margin-top: 2.5rem;
+}
+
+.auth-footer {
+  margin-top: 4rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Home
+--------------------------------------------------------------------------- */
+
+.home-top {
+  margin-bottom: 3.5rem;
+}
+
+.home-footer {
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+  margin-top: 4rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Poem
+--------------------------------------------------------------------------- */
+
+.poem-meta {
+  margin-bottom: 0.75rem;
+}
+
+.poem-title {
+  font-size: 1.875rem;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.25;
+  margin: 0 0 2.5rem;
+  overflow-wrap: anywhere;
+}
+
+.poem-body {
+  margin: 0;
+}
+
+.poem-body p {
+  margin: 0;
+  padding-left: 2em;
+  text-indent: -2em;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.poem-spacer {
+  height: 1.75em;
+}
+
+.poem-actions {
+  margin-top: 3.5rem;
+}
+
+.poem-nav {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 3.5rem;
+}
+
+.poem-nav a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.poem-nav-previous {
+  justify-self: start;
+}
+
+.poem-nav-all {
+  justify-self: center;
+}
+
+.poem-nav-next {
+  justify-self: end;
+}
+
+/* ---------------------------------------------------------------------------
+   Lists, books, profile
+--------------------------------------------------------------------------- */
+
+.month-heading {
+  color: var(--ink);
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  margin: 3rem 0 0.5rem;
+}
+
+.entries-list {
+  margin-top: 2rem;
+}
+
+.section-gap {
+  margin-top: 3.5rem;
+}
+
+.page-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.75rem;
+  margin-top: 4rem;
+}
+
+.book-list {
+  margin-top: 2.5rem;
+}
+
+.book-item {
+  margin-top: 1.25rem;
+}
+
+.book-title {
+  font-style: italic;
+}
+
+.book-status {
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.profile-block {
+  margin-top: 2.5rem;
+}
+
+.profile-block + .profile-block {
+  margin-top: 3rem;
+}
+
+.profile-label {
+  display: block;
+  margin-bottom: 0.375rem;
+}
+
+.profile-email {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.delete-warning {
+  margin: 4rem 0 0.75rem;
+  color: var(--faded);
+}
+
+.delete-confirm {
+  margin-top: 0.75rem;
+}
+
+.delete-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.75rem;
+  margin-top: 0.75rem;
+}
+
+.auth-placeholder {
+  display: inline-block;
+  min-width: 3rem;
+  min-height: 1em;
+}
+
+@media (max-width: 640px) {
+  .page-shell {
+    padding-top: 4rem;
+  }
+
+  .site-header {
+    margin-bottom: 3.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .index-row,
+  .index-row--with-action,
+  .index-row--home,
+  .index-row--home.index-row--with-action {
+    grid-template-columns: 5.5rem minmax(0, 1fr) auto;
+    column-gap: 0.75rem;
+  }
+
+  .index-row:not(.index-row--with-action) {
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+  }
 }

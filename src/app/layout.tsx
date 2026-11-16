@@ -1,20 +1,27 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { IBM_Plex_Mono, Newsreader } from "next/font/google";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const newsreader = Newsreader({
+  variable: "--font-newsreader",
   subsets: ["latin"],
+  style: ["normal", "italic"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
   subsets: ["latin"],
+  weight: "400",
+  display: "swap",
 });
 
 export const viewport = {
-  themeColor: "#111827",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f6f1e7" },
+    { media: "(prefers-color-scheme: dark)", color: "#1b1815" },
+  ],
 };
 
 export const metadata: Metadata = {
@@ -122,14 +129,6 @@ const siteJsonLd = {
         "A personal collection of poems by Darshan Regmi exploring love, loss, healing, and self-discovery.",
       inLanguage: "en",
       publisher: { "@id": `${SITE_URL}/#person` },
-      potentialAction: {
-        "@type": "SearchAction",
-        target: {
-          "@type": "EntryPoint",
-          urlTemplate: `${SITE_URL}/poem?q={search_term_string}`,
-        },
-        "query-input": "required name=search_term_string",
-      },
     },
     {
       "@type": "Person",
@@ -152,9 +151,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" dir="ltr" className="scroll-smooth">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${newsreader.variable} ${plexMono.variable}`}>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}
