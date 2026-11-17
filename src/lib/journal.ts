@@ -104,17 +104,28 @@ export function slugifyTitle(title: string): string {
 }
 
 export function poemSlug(poem: Poem): string {
-  return `${slugifyTitle(poem.title)}-${poem.id}`;
+  return `${slugifyTitle(poem.title)}-${compactPoemId(poem.id)}`;
 }
 
 export function poemHref(poem: Poem): string {
   return `/entries/${poemSlug(poem)}`;
 }
 
+/**
+ * Notion page ids arrive as dashed UUIDs, but the compact 32-character form is
+ * what journal URLs use. Stored `poem.id` values stay untouched so existing
+ * Firestore likes keep pointing at the same poem documents.
+ */
+export function compactPoemId(id: string): string {
+  return id.replace(/-/g, "").toLowerCase();
+}
+
 /** The trailing Notion page id is the stable part of a poem URL. */
 export function extractPoemId(slug: string): string | null {
-  const match = slug.match(/([0-9a-f]{32})(?:-|$)/i);
-  return match ? match[1].toLowerCase() : null;
+  const match = slug.match(
+    /([0-9a-f]{32}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i
+  );
+  return match ? compactPoemId(match[1]) : null;
 }
 
 export function isCanonicalPoemSlug(slug: string, poem: Poem): boolean {

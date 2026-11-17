@@ -74,4 +74,15 @@ describe("poem slugs", () => {
     expect(extractPoemId(id)).toBe(id);
     expect(extractPoemId("i-would")).toBeNull();
   });
+
+  it("normalises dashed Notion UUIDs to the compact URL id", () => {
+    const dashed = "40441934-7bda-8193-9b61-ea27f43b13f6";
+    const compact = "404419347bda81939b61ea27f43b13f6";
+
+    expect(extractPoemId(`the-second-time-${dashed}`)).toBe(compact);
+    expect(extractPoemId(dashed)).toBe(compact);
+    expect(poemSlug(poem(dashed, "the second time", "2026-01-01T00:00:00.000Z"))).toBe(
+      `the-second-time-${compact}`
+    );
+  });
 });

@@ -3,6 +3,7 @@ import { getPoemsFromNotion, type Poem } from "./notion";
 import {
   buildEntries,
   buildEntriesNewestFirst,
+  compactPoemId,
   extractPoemId,
   slugifyTitle,
   type Entry,
@@ -42,12 +43,7 @@ export const getPoem = cache(async (slug: string): Promise<Poem | null> => {
   const id = extractPoemId(slug);
 
   if (id) {
-    return poems.find((poem) => poem.id === id) ?? null;
-  }
-
-  if (/^[0-9a-f]{32}$/i.test(slug)) {
-    const lower = slug.toLowerCase();
-    return poems.find((poem) => poem.id === lower) ?? null;
+    return poems.find((poem) => compactPoemId(poem.id) === id) ?? null;
   }
 
   const matches = poems.filter((poem) => slugifyTitle(poem.title) === slug);
