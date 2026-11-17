@@ -22,7 +22,7 @@ export default function TimeStamp() {
   const separator = now && now.getSeconds() % 2 === 0 ? ":" : "⁚";
 
   return (
-    <p className="pointer-events-none fixed left-4 top-4 z-50 font-mono text-[10px] tracking-[0.2em] text-bone/40 sm:left-5 sm:top-5 sm:text-[11px] sm:tracking-[0.22em]">
+    <p className="pointer-events-none fixed left-4 top-4 z-50 font-mono text-[10px] tracking-[0.2em] text-faded sm:left-5 sm:top-5 sm:text-[11px] sm:tracking-[0.22em]">
       qwzx / {hours}
       {separator}
       {minutes} / nobody is here.
