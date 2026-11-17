@@ -177,7 +177,7 @@
   column-gap: 1rem;
   align-items: baseline;
   min-height: 44px;
-  padding-block: 0.5rem;
+  padding-block: 1rem;
 }
 
 .index-row--home {
@@ -199,6 +199,7 @@
 .index-title {
   min-width: 0;
   overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
 .index-action {
@@ -211,6 +212,7 @@
   display: inline-block;
   min-height: 44px;
   padding-block: 0.35rem;
+  line-height: 1.55;
   text-decoration: none;
   overflow-wrap: anywhere;
 }
