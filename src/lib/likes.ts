@@ -8,7 +8,8 @@ import {
   where,
   writeBatch,
 } from "firebase/firestore";
-import { db } from "./firebase";
+import { signInAnonymously } from "firebase/auth";
+import { auth, db } from "./firebase";
 
 const LIKES = "likes";
 const POEMS = "poems";
@@ -22,6 +23,29 @@ export type LikeRecord = {
 
 function likeId(poemId: string, uid: string): string {
   return `${poemId}_${uid}`;
+}
+
+let anonymousSignIn: Promise<string> | null = null;
+
+/**
+ * The account that owns likes on this device. Visitors can like without
+ * signing up, so the first like creates an anonymous Firebase session; if one
+ * already exists it is restored from persistence. Concurrent callers share a
+ * single sign-in attempt.
+ */
+export async function ensureUid(): Promise<string> {
+  const current = auth.currentUser;
+  if (current) return current.uid;
+
+  if (!anonymousSignIn) {
+    anonymousSignIn = signInAnonymously(auth)
+      .then((result) => result.user.uid)
+      .finally(() => {
+        anonymousSignIn = null;
+      });
+  }
+
+  return anonymousSignIn;
 }
 
 /** Every poem id this account has liked. */
@@ -70,13 +94,15 @@ export async function isPoemLiked(poemId: string, uid: string): Promise<boolean>
  */
 export async function togglePoemLike(
   poemId: string,
-  uid: string
+  uid?: string
 ): Promise<{ liked: boolean; likes: number }> {
-  if (!poemId || !uid) {
+  const owner = uid ?? (await ensureUid());
+
+  if (!poemId || !owner) {
     throw new Error("missing poem or account");
   }
 
-  const likeRef = doc(db, LIKES, likeId(poemId, uid));
+  const likeRef = doc(db, LIKES, likeId(poemId, owner));
   const poemRef = doc(db, POEMS, poemId);
 
   const [like, poem] = await Promise.all([getDoc(likeRef), getDoc(poemRef)]);
@@ -101,7 +127,7 @@ export async function togglePoemLike(
   }
 
   const record: LikeRecord = {
-    userId: uid,
+    userId: owner,
     poemId,
     timestamp: new Date(),
   };

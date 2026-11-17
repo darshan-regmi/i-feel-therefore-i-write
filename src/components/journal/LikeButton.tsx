@@ -1,16 +1,17 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { User } from "firebase/auth";
 
 /**
+ * Liking never asks for an account: the first visit to a poem opens an
+ * anonymous Firebase session, so the heart works straight away. Those likes
+ * follow the visitor into a real account when they sign in to view /liked.
+ *
  * Firebase and Firestore are imported after mount so the poem page's initial
  * JavaScript stays small; the count appears as soon as they resolve.
  */
 export default function LikeButton({ poemId }: { poemId: string }) {
-  const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
   const [liked, setLiked] = useState(false);
@@ -18,20 +19,33 @@ export default function LikeButton({ poemId }: { poemId: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const loadIdRef = useRef(0);
+
+  // Restore this device's session, or create an anonymous one so a like does
+  // not need a sign-up. A failed attempt leaves the button usable: clicking it
+  // tries again.
   useEffect(() => {
     let cancelled = false;
     let unsubscribe: (() => void) | undefined;
 
     (async () => {
-      const [{ auth }, { onAuthStateChanged }] = await Promise.all([
-        import("@/lib/firebase"),
-        import("firebase/auth"),
-      ]);
+      const [{ auth }, { onAuthStateChanged }, { ensureUid }] =
+        await Promise.all([
+          import("@/lib/firebase"),
+          import("firebase/auth"),
+          import("@/lib/likes"),
+        ]);
       if (cancelled) return;
 
       unsubscribe = onAuthStateChanged(auth, (nextUser) => {
-        setUser(nextUser && !nextUser.isAnonymous ? nextUser : null);
+        setUser(nextUser);
         setReady(true);
+
+        if (!nextUser) {
+          ensureUid().catch((authError) => {
+            console.error("could not start an anonymous session", authError);
+          });
+        }
       });
     })().catch((authError) => {
       console.error("could not start the like session", authError);
@@ -44,7 +58,10 @@ export default function LikeButton({ poemId }: { poemId: string }) {
     };
   }, []);
 
+  const uid = user?.uid ?? null;
+
   useEffect(() => {
+    const loadId = ++loadIdRef.current;
     let cancelled = false;
 
     setCount(null);
@@ -55,27 +72,30 @@ export default function LikeButton({ poemId }: { poemId: string }) {
       const { getLikeCount, isPoemLiked } = await import("@/lib/likes");
       const [likes, hasLiked] = await Promise.all([
         getLikeCount(poemId),
-        user ? isPoemLiked(poemId, user.uid) : Promise.resolve(false),
+        uid ? isPoemLiked(poemId, uid) : Promise.resolve(false),
       ]);
 
-      if (cancelled) return;
+      if (cancelled || loadId !== loadIdRef.current) return;
       setCount(likes);
       setLiked(hasLiked);
     })().catch((loadError) => {
       console.error("could not load the like state", loadError);
-      if (!cancelled) setCount(0);
+      if (!cancelled && loadId === loadIdRef.current) setCount(0);
     });
 
     return () => {
       cancelled = true;
     };
-  }, [poemId, user]);
+  }, [poemId, uid]);
 
   const handleToggle = async () => {
-    if (!user || busy) return;
+    if (busy) return;
 
     const previousLiked = liked;
     const previousCount = count ?? 0;
+
+    // Invalidate any in-flight initial read so it cannot overwrite the result.
+    loadIdRef.current += 1;
 
     setBusy(true);
     setError(null);
@@ -83,8 +103,9 @@ export default function LikeButton({ poemId }: { poemId: string }) {
     setCount(Math.max(0, previousCount + (previousLiked ? -1 : 1)));
 
     try {
-      const { togglePoemLike } = await import("@/lib/likes");
-      const result = await togglePoemLike(poemId, user.uid);
+      const { ensureUid, togglePoemLike } = await import("@/lib/likes");
+      const owner = user?.uid ?? (await ensureUid());
+      const result = await togglePoemLike(poemId, owner);
       setLiked(result.liked);
       setCount(result.likes);
     } catch (toggleError) {
@@ -108,21 +129,6 @@ export default function LikeButton({ poemId }: { poemId: string }) {
       <span className="like-button meta" aria-hidden="true">
         <span className="like-heart">♡</span> —
       </span>
-    );
-  }
-
-  if (!user) {
-    return (
-      <Link
-        href={`/login?next=${encodeURIComponent(pathname)}`}
-        className="like-button plain-link"
-        aria-label={`log in to like this poem (${count ?? 0} likes)`}
-      >
-        <span className="like-heart" aria-hidden="true">
-          ♡
-        </span>
-        <span className="meta">{countLabel}</span>
-      </Link>
     );
   }
 
