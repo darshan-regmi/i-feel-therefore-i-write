@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Newsreader } from "next/font/google";
-import { SITE_URL } from "@/lib/site";
+import { OG_IMAGE, OG_IMAGE_SIZE, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const newsreader = Newsreader({
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   category: "poetry",
   // No `alternates.canonical` here on purpose: root-layout metadata is
   // inherited by every route, so declaring the homepage canonical up here made
-  // /poem/doorway, /login, /liked-poem and /poems all claim to be duplicates of
+  // /poem/doorway, /login, /profile and /liked all claim to be duplicates of
   // "/". Each route declares its own instead.
   keywords: [
     // Core poetry topics
@@ -99,10 +99,9 @@ export const metadata: Metadata = {
     siteName: "i feel, therefore i write",
     images: [
       {
-        url: `${SITE_URL}/default-og-image.png`,
-        width: 1200,
-        height: 630,
-        alt: "Poetry by Darshan Regmi – i feel, therefore i write",
+        url: OG_IMAGE,
+        ...OG_IMAGE_SIZE,
+        alt: "i feel, therefore i write — poetry by Darshan Regmi",
       },
     ],
     locale: "en_US",
@@ -113,7 +112,7 @@ export const metadata: Metadata = {
     title: "Poetry by Darshan Regmi | i feel, therefore i write",
     description:
       "A personal poetry collection exploring emotion, reflection, and vulnerability. Written by Darshan Regmi.",
-    images: [`${SITE_URL}/default-og-image.png`],
+    images: [OG_IMAGE],
   },
 };
 

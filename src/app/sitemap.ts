@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { poemHref } from "@/lib/journal";
 import { getPoemsFromNotion } from "@/lib/notion";
 import { SITE_URL } from "@/lib/site";
 
@@ -9,19 +10,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const staticRoutes: MetadataRoute.Sitemap = [
     {
-      url: `${SITE_URL}/`,
+      url: `${SITE_URL}/home`,
       lastModified: now,
       changeFrequency: "weekly",
       priority: 1.0,
     },
     {
-      url: `${SITE_URL}/poem`,
+      url: `${SITE_URL}/entries`,
       lastModified: now,
       changeFrequency: "daily",
       priority: 0.9,
     },
     {
-      url: `${SITE_URL}/about-the-author`,
+      url: `${SITE_URL}/about`,
       lastModified: now,
       changeFrequency: "yearly",
       priority: 0.5,
@@ -40,12 +41,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let poemRoutes: MetadataRoute.Sitemap = [];
   try {
     const poems = await getPoemsFromNotion();
-    poemRoutes = poems.map((p) => ({
-      url: `${SITE_URL}/poem/${p.id}`,
+    poemRoutes = poems.map((poem) => ({
+      url: `${SITE_URL}${poemHref(poem)}`,
       // Notion's last_edited_time is an ISO string, but a malformed or absent
       // value would produce an Invalid Date and serialize as "Invalid Date",
       // which makes the whole sitemap unparseable. Fall back to now.
-      lastModified: parseDate(p.updatedAt) ?? now,
+      lastModified: parseDate(poem.updatedAt) ?? now,
       changeFrequency: "monthly",
       priority: 0.7,
     }));

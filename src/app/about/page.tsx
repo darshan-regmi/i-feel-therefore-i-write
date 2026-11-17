@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { SITE_URL } from "@/lib/site";
+import { OG_IMAGE, OG_IMAGE_SIZE, SITE_URL } from "@/lib/site";
 import { getBooks } from "@/lib/books";
 import AuthLink from "@/components/journal/AuthLink";
 import PageShell from "@/components/journal/PageShell";
@@ -22,10 +22,9 @@ export const metadata: Metadata = {
     url: `${SITE_URL}/about`,
     images: [
       {
-        url: `${SITE_URL}/author.jpg`,
-        width: 800,
-        height: 1000,
-        alt: "Darshan Regmi - Poetry Author",
+        url: OG_IMAGE,
+        ...OG_IMAGE_SIZE,
+        alt: "about the author — Darshan Regmi",
       },
     ],
   },
@@ -34,7 +33,7 @@ export const metadata: Metadata = {
     title: "About the Author | i feel, therefore i write",
     description:
       "Learn more about Darshan Regmi, the poet behind i feel, therefore i write.",
-    images: [`${SITE_URL}/author.jpg`],
+    images: [OG_IMAGE],
   },
 };
 

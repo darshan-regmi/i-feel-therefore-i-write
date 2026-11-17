@@ -22,6 +22,15 @@ const nextConfig = {
       // The journal's canonical list lives at /entries now.
       { source: "/poem", destination: "/entries", permanent: true },
       { source: "/about-the-author", destination: "/about", permanent: true },
+      { source: "/liked-poem", destination: "/liked", permanent: true },
+      { source: "/liked-poem/:id", destination: "/entries/:id", permanent: true },
+      { source: "/forgot-password", destination: "/forget-password", permanent: true },
+      {
+        source: "/login",
+        has: [{ type: "query", key: "mode", value: "reset" }],
+        destination: "/forget-password",
+        permanent: true,
+      },
     ]
   },
 }

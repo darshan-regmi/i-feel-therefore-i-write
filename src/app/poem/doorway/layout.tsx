@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { SITE_URL } from "@/lib/site";
+import { OG_IMAGE, OG_IMAGE_SIZE, SITE_URL } from "@/lib/site";
 
 const TITLE = "Doorway";
 const DESCRIPTION =
@@ -18,12 +18,19 @@ export const metadata: Metadata = {
     siteName: "i feel, therefore i write",
     type: "article",
     locale: "en_US",
+    images: [
+      {
+        url: OG_IMAGE,
+        ...OG_IMAGE_SIZE,
+        alt: "doorway — a poem by Darshan Regmi",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: `${TITLE} | i feel, therefore i write`,
     description: DESCRIPTION,
-    images: [`${SITE_URL}/default-og-image.png`],
+    images: [OG_IMAGE],
   },
 };
 

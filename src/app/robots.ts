@@ -14,9 +14,18 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        // /login and /liked-poem are also marked noindex in their own metadata;
+        // These routes are also marked noindex in their own metadata;
         // disallow here just keeps crawl budget off them.
-        disallow: ["/api/", "/login", "/liked-poem", "/qwzx"],
+        disallow: [
+          "/api/",
+          "/login",
+          "/signup",
+          "/forget-password",
+          "/profile",
+          "/liked",
+          "/liked-poem",
+          "/qwzx",
+        ],
       },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,

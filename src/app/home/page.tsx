@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { SITE_URL } from "@/lib/site";
+import { OG_IMAGE, OG_IMAGE_SIZE, SITE_URL } from "@/lib/site";
 import { getEntries } from "@/lib/poems";
 import { formatLongDate, poemHref } from "@/lib/journal";
 import AuthLink from "@/components/journal/AuthLink";
@@ -34,23 +34,22 @@ export const metadata: Metadata = {
       "Explore heartfelt poems by Darshan Regmi. A modern collection that touches on love, emotion, healing, and self-expression.",
     url: `${SITE_URL}/home`,
     siteName: "i feel, therefore i write",
-    locale: "en_US",
-    type: "website",
     images: [
       {
-        url: `${SITE_URL}/default-og-image.png`,
-        width: 1200,
-        height: 630,
-        alt: "i feel, therefore i write | Poetry Collection by Darshan Regmi",
+        url: OG_IMAGE,
+        ...OG_IMAGE_SIZE,
+        alt: "i feel, therefore i write — poetry by Darshan Regmi",
       },
     ],
+    locale: "en_US",
+    type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "i feel, therefore i write | Poetry Collection by Darshan Regmi",
     description:
       "Dive into original, emotional poetry by Darshan Regmi. A modern collection about love, healing, and self-expression.",
-    images: [`${SITE_URL}/default-og-image.png`],
+    images: [OG_IMAGE],
   },
 };
 
