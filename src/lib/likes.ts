@@ -9,7 +9,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { signInAnonymously } from "firebase/auth";
-import { auth, db } from "./firebase";
+import { getFirebaseAuth, getFirebaseDb } from "./firebase";
 
 const LIKES = "likes";
 const POEMS = "poems";
@@ -34,6 +34,7 @@ let anonymousSignIn: Promise<string> | null = null;
  * single sign-in attempt.
  */
 export async function ensureUid(): Promise<string> {
+  const auth = getFirebaseAuth();
   const current = auth.currentUser;
   if (current) return current.uid;
 
@@ -52,6 +53,7 @@ export async function ensureUid(): Promise<string> {
 export async function getLikedPoemIds(uid: string): Promise<string[]> {
   if (!uid) return [];
 
+  const db = getFirebaseDb();
   const snapshot = await getDocs(
     query(collection(db, LIKES), where("userId", "==", uid))
   );
@@ -64,6 +66,7 @@ export async function getLikedPoemIds(uid: string): Promise<string[]> {
 /** The stored counter on `poems/{id}`. Missing docs read as zero. */
 export async function getLikeCount(poemId: string): Promise<number> {
   try {
+    const db = getFirebaseDb();
     const snapshot = await getDoc(doc(db, POEMS, poemId));
     const value = snapshot.data()?.likes;
     return typeof value === "number" && Number.isFinite(value) && value > 0
@@ -79,6 +82,7 @@ export async function isPoemLiked(poemId: string, uid: string): Promise<boolean>
   if (!uid) return false;
 
   try {
+    const db = getFirebaseDb();
     const snapshot = await getDoc(doc(db, LIKES, likeId(poemId, uid)));
     return snapshot.exists();
   } catch (error) {
@@ -102,6 +106,7 @@ export async function togglePoemLike(
     throw new Error("missing poem or account");
   }
 
+  const db = getFirebaseDb();
   const likeRef = doc(db, LIKES, likeId(poemId, owner));
   const poemRef = doc(db, POEMS, poemId);
 
@@ -142,6 +147,7 @@ export async function togglePoemLike(
 export async function deleteOwnLikes(uid: string): Promise<void> {
   if (!uid) return;
 
+  const db = getFirebaseDb();
   const snapshot = await getDocs(
     query(collection(db, LIKES), where("userId", "==", uid))
   );

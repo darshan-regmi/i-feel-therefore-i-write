@@ -15,13 +15,13 @@ export default function AuthLink() {
     let unsubscribe: (() => void) | undefined;
 
     (async () => {
-      const [{ auth }, { onAuthStateChanged }] = await Promise.all([
+      const [{ getFirebaseAuth }, { onAuthStateChanged }] = await Promise.all([
         import("@/lib/firebase"),
         import("firebase/auth"),
       ]);
       if (cancelled) return;
 
-      unsubscribe = onAuthStateChanged(auth, (user) => {
+      unsubscribe = onAuthStateChanged(getFirebaseAuth(), (user) => {
         setSignedIn(Boolean(user && !user.isAnonymous));
       });
     })().catch(() => {

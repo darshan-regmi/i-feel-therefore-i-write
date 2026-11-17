@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { sendEmailVerification, signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { getFirebaseAuth } from "@/lib/firebase";
 import LikedPoems, { type LikedPoemItem } from "./LikedPoems";
 import TextButton from "./TextButton";
 import { useSignedInUser } from "./useSignedInUser";
@@ -37,7 +37,7 @@ export default function ProfileView({ items }: { items: LikedPoemItem[] }) {
     setSigningOut(true);
 
     try {
-      await signOut(auth);
+      await signOut(getFirebaseAuth());
       router.replace("/login");
     } catch (error) {
       console.error("could not sign out", error);

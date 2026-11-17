@@ -17,7 +17,7 @@ import {
   signInWithRedirect,
   type User,
 } from "firebase/auth";
-import { auth, db } from "@/lib/firebase";
+import { getFirebaseAuth, getFirebaseDb } from "@/lib/firebase";
 import { getLikedPoemIds } from "@/lib/likes";
 import { migrateLikes, type AnonymousLikesSnapshot } from "@/utils/firebaseUtils";
 import { isInAppBrowser } from "@/lib/inAppBrowser";
@@ -131,7 +131,7 @@ async function migrateSnapshot(
   uid: string
 ): Promise<void> {
   if (!snapshot || snapshot.uid === uid) return;
-  await migrateLikes(snapshot, uid, db);
+  await migrateLikes(snapshot, uid, getFirebaseDb());
 }
 
 export default function AuthForm({ mode }: { mode: Mode }) {
@@ -185,7 +185,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
 
   // Read the anonymous session's likes once, before any sign-in replaces it.
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (current) => {
+    const unsubscribe = onAuthStateChanged(getFirebaseAuth(), (current) => {
       setUser(current);
       setReady(true);
 
@@ -226,7 +226,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
 
     (async () => {
       try {
-        const result = await getRedirectResult(auth);
+        const result = await getRedirectResult(getFirebaseAuth());
 
         if (result?.user) {
           const snapshot = readPendingLikes();
@@ -245,11 +245,11 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           }
 
           if (!cancelled) router.replace(next);
-        } else if (
-          hadMarker &&
-          !(auth.currentUser && !auth.currentUser.isAnonymous)
-        ) {
-          setNotice(GOOGLE_INCOMPLETE_NOTICE);
+        } else if (hadMarker) {
+          const current = getFirebaseAuth().currentUser;
+          if (!(current && !current.isAnonymous)) {
+            setNotice(GOOGLE_INCOMPLETE_NOTICE);
+          }
         }
       } catch (redirectError) {
         writePendingLikes(null);
@@ -314,6 +314,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
+    const auth = getFirebaseAuth();
     setError(null);
     setNotice(null);
 
@@ -420,7 +421,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       }
 
       try {
-        await signInWithRedirect(auth, provider);
+        await signInWithRedirect(getFirebaseAuth(), provider);
         // On success the browser navigates away.
       } catch (redirectError) {
         writePendingLikes(null);
@@ -450,7 +451,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     provider.setCustomParameters({ prompt: "select_account" });
 
     // Must stay synchronous: Safari refuses a popup opened after an await.
-    signInWithPopup(auth, provider)
+    signInWithPopup(getFirebaseAuth(), provider)
       .then(async (result) => {
         try {
           await migrateSnapshot(anonSnapshotRef.current, result.user.uid);
