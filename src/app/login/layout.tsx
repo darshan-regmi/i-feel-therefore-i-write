@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 
-/** page.tsx is a client component, so its metadata lives here instead. */
+/** Auth pages are unique per visitor and have no search value. */
 export const metadata: Metadata = {
   title: "Log in",
-  // Unique per visitor and no search value — keep it out of the index.
-  robots: { index: false, follow: true },
+  description: "Sign in to keep the poems you love close.",
+  robots: { index: false, follow: false },
 };
 
 export default function LoginLayout({
