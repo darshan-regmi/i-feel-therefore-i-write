@@ -3,11 +3,12 @@ export const runtime = 'edge';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 
-// Cache tags used by unstable_cache wrappers around poems + like counts.
+// Cache tags used by unstable_cache wrappers around poems, books + like counts.
 // Keep this list in sync with the `tags` option in:
 //   - src/lib/notion.ts        (tag: "poems")
+//   - src/lib/books.ts         (tag: "books")
 //   - src/lib/poemLikes.ts     (tag: "poem-likes")
-const CACHE_TAGS = ['poems', 'poem-likes'] as const;
+const CACHE_TAGS = ['poems', 'books', 'poem-likes'] as const;
 
 export async function GET(req: NextRequest) {
   const startTime = Date.now();
@@ -41,7 +42,7 @@ export async function GET(req: NextRequest) {
           )
         : [...CACHE_TAGS];
 
-    const pathsToRevalidate = ['/poem', '/liked-poem'];
+    const pathsToRevalidate = ['/home', '/entries', '/about'];
 
     const revalidationResults: Array<
       { kind: 'path' | 'tag'; name: string; status: 'success' | 'failed'; error?: string }

@@ -155,6 +155,51 @@ export type PoemDoc = {
   createdAt?: string;
 };
 
+function decodeDoc(doc: FirestoreDoc): { id: string; fields: Record<string, unknown> } | null {
+  const id = doc.name.split("/").pop();
+  if (!id) return null;
+  const fields: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(doc.fields ?? {})) {
+    fields[key] = decodeValue(value);
+  }
+  return { id, fields };
+}
+
+export const listBooks = async (): Promise<Array<Record<string, unknown> & { id: string }>> => {
+  const token = await getAccessToken();
+  const out: Array<Record<string, unknown> & { id: string }> = [];
+  let pageToken: string | undefined;
+
+  do {
+    const url = new URL(`${firestoreBase()}/books`);
+    url.searchParams.set("pageSize", "300");
+    if (pageToken) url.searchParams.set("pageToken", pageToken);
+
+    const res = await fetch(url.toString(), {
+      headers: { Authorization: `Bearer ${token}` },
+      next: { revalidate: 300, tags: ["books"] },
+    });
+    if (!res.ok) {
+      // A missing collection and a rules denial both mean "no books to show";
+      // the page itself must never fail because this optional section is empty.
+      if (res.status === 404 || res.status === 403) return out;
+      const body = await res.text().catch(() => "");
+      throw new Error(`Firestore books list failed: ${res.status} ${body}`);
+    }
+    const data = (await res.json()) as {
+      documents?: FirestoreDoc[];
+      nextPageToken?: string;
+    };
+    for (const doc of data.documents ?? []) {
+      const decoded = decodeDoc(doc);
+      if (decoded) out.push({ id: decoded.id, ...decoded.fields });
+    }
+    pageToken = data.nextPageToken;
+  } while (pageToken);
+
+  return out;
+};
+
 export const listAllPoems = async (): Promise<Map<string, PoemDoc>> => {
   const token = await getAccessToken();
   const out = new Map<string, PoemDoc>();

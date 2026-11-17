@@ -8,7 +8,6 @@ import {
   useMotionValue,
   useReducedMotion,
   useSpring,
-  useTransform,
 } from "framer-motion";
 
 import Blob from "@/components/confessional/Blob";
@@ -43,11 +42,11 @@ const GLITCH_CSS = `
   pointer-events: none;
 }
 .qwzx-glitch::before {
-  color: #ff2e3f;
+  color: #9a3b2b;
   animation: qwzx-glitch-a 0.18s steps(2) infinite;
 }
 .qwzx-glitch::after {
-  color: #c6ff3d;
+  color: #2a2520;
   animation: qwzx-glitch-b 0.16s steps(2) infinite;
 }
 `;
@@ -77,18 +76,11 @@ export default function ConfessionalPage() {
   const shake = useAnimationControls();
 
   // Normalised cursor position (-1..1) with a soft spring; used by the blob
-  // lean, the pupils, and the grain intensity.
+  // lean and the pupils.
   const rawX = useMotionValue(0);
   const rawY = useMotionValue(0);
   const mx = useSpring(rawX, { stiffness: 55, damping: 18, mass: 0.7 });
   const my = useSpring(rawY, { stiffness: 55, damping: 18, mass: 0.7 });
-
-  // "the page gets heavier" — a normal-blend vignette whose opacity follows the
-  // cursor. Cheaper than animating a blended grain layer every frame.
-  const heavyOpacity = useTransform([mx, my], (values) => {
-    const [x, y] = values as [number, number];
-    return 0.45 + Math.min(0.3, Math.hypot(x, y) * 0.28);
-  });
 
   const phaseRef = useRef(phase);
   const asleepRef = useRef(asleep);
@@ -467,55 +459,13 @@ export default function ConfessionalPage() {
   return (
     <main
       onPointerDown={focusHiddenInput}
-      className="relative h-dvh w-full overflow-hidden bg-void text-bone selection:bg-acid selection:text-void"
+      className="relative h-dvh w-full overflow-hidden bg-paper text-ink selection:bg-ink selection:text-paper"
       style={{ cursor: coarse ? "auto" : "none" }}
     >
       <style>{GLITCH_CSS}</style>
 
       <motion.div animate={shake} className="relative h-full w-full">
-        {/* depth */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 z-0"
-          style={{
-            background:
-              "radial-gradient(ellipse at 50% 42%, rgba(59,29,90,0.34) 0%, rgba(11,10,10,0) 55%, rgba(11,10,10,0.92) 100%)",
-          }}
-        />
-
         <TimeStamp />
-
-        {/* heaviness — normal blend, opacity-only, follows the cursor */}
-        <motion.div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 z-0"
-          style={{
-            opacity: heavyOpacity,
-            background:
-              "radial-gradient(ellipse at 50% 40%, rgba(11,10,10,0) 28%, rgba(11,10,10,0.85) 100%)",
-            willChange: "opacity",
-          }}
-        />
-
-        {/* the bruise flood — a transform-scaled circle instead of an animated
-            full-screen clip-path, so the compositor handles it */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 z-20 overflow-hidden"
-        >
-          <motion.div
-            className="absolute left-1/2 top-[46%] aspect-square w-[170vmax] rounded-full"
-            initial={false}
-            animate={{ scale: swallowing ? 1 : 0 }}
-            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-            style={{
-              translate: "-50% -50%",
-              background:
-                "radial-gradient(circle at 50% 45%, #4d2877 0%, #3b1d5a 42%, #0b0a0a 100%)",
-              willChange: "transform",
-            }}
-          />
-        </div>
 
         <FallingPoems
           poems={poems}
@@ -542,14 +492,14 @@ export default function ConfessionalPage() {
 
           <h1
             className="relative z-40 max-w-[92vw] text-center text-[clamp(2.1rem,7vw,5rem)] italic leading-[0.95] tracking-[-0.02em]"
-            style={{ fontFamily: "var(--font-instrument-serif)" }}
+            style={{ fontFamily: "var(--font-newsreader)" }}
           >
             <motion.span
               key={headline}
               data-text={headline}
               className={phase === "wrong" ? "qwzx-glitch" : undefined}
-              initial={{ opacity: 0, filter: "blur(7px)" }}
-              animate={{ opacity: 1, filter: "blur(0px)" }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: reduce ? 0 : 0.5, ease: "easeOut" }}
             >
               {headline}
@@ -566,7 +516,7 @@ export default function ConfessionalPage() {
               exit={{ opacity: 0 }}
               className="pointer-events-none absolute inset-x-0 bottom-[15vh] z-40 flex flex-col items-center"
             >
-              <p className="font-mono text-[11px] tracking-[0.32em] text-acid/80">
+              <p className="font-mono text-[11px] tracking-[0.32em] text-faded">
                 {phase === "drained" ? (
                   target > 0 ? (
                     <>
@@ -584,7 +534,7 @@ export default function ConfessionalPage() {
                 )}
               </p>
               {phase === "drained" && (
-                <p className="mt-3 font-mono text-[9px] tracking-[0.28em] text-bone/25">
+                <p className="mt-3 font-mono text-[9px] tracking-[0.28em] text-faded">
                   hold 1s to read
                 </p>
               )}
@@ -594,7 +544,7 @@ export default function ConfessionalPage() {
 
         <p
           aria-live="polite"
-          className="pointer-events-none absolute bottom-4 right-4 z-50 font-mono text-[10px] tracking-[0.2em] text-bone/40 sm:bottom-5 sm:right-5 sm:text-[11px] sm:tracking-[0.22em]"
+          className="pointer-events-none absolute bottom-4 right-4 z-50 font-mono text-[10px] tracking-[0.2em] text-faded sm:bottom-5 sm:right-5 sm:text-[11px] sm:tracking-[0.22em]"
         >
           {status}
         </p>
@@ -608,9 +558,10 @@ export default function ConfessionalPage() {
         {flash && (
           <motion.div
             aria-hidden
-            className="pointer-events-none fixed inset-0 z-[80] bg-blood"
+            className="pointer-events-none fixed inset-0 z-[80]"
+            style={{ backgroundColor: "var(--error)" }}
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.9 }}
+            animate={{ opacity: 0.16 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
           />

@@ -123,15 +123,15 @@ export default function EyeCursor() {
             cy="10"
             rx="13"
             ry="8"
-            fill="rgba(11,10,10,0.35)"
-            stroke="rgba(233,226,208,0.7)"
+            fill="var(--paper)"
+            stroke="var(--ink)"
             strokeWidth="1"
           />
           <motion.circle
             cx="15"
             cy="10"
             r="2.6"
-            fill="#c6ff3d"
+            fill="var(--ink)"
             style={{ x: pupilX }}
           />
         </motion.g>

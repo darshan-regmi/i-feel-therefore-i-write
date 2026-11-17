@@ -76,7 +76,7 @@ describe("reportAuthError", () => {
 
     expect(spy).toHaveBeenCalledWith("auth/invalid-credential", error);
     expect(result.code).toBe("auth/invalid-credential");
-    expect(result.message).toContain("Continue with Google");
+    expect(result.message).toContain("don’t match");
   });
 
   it("handles errors without a code", () => {

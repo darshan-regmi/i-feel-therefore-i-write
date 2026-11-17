@@ -164,7 +164,7 @@ export default function FallingPoems({
             }
           }}
         >
-          <span className="block whitespace-nowrap px-2 py-1 font-mono text-bone/80">
+          <span className="block whitespace-nowrap px-2 py-1 font-mono text-ink/80">
             {line.text}
           </span>
         </div>

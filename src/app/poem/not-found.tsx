@@ -1,20 +1,16 @@
-'use client'
+import Link from "next/link";
 
-import Link from 'next/link'
-
-export default function NotFound() {
+export default function PoemNotFound() {
   return (
-    <main className="min-h-screen bg-white text-gray-900 flex flex-col items-center p-8">
-      <h1 className="text-4xl font-bold text-center mb-6">Poem Not Found</h1>
-      <p className="text-center text-gray-600 mb-6">
-        The poem you&apos;re looking for doesn&apos;t exist or has been removed.
+    <main className="page-shell">
+      <h1 className="page-title">this verse doesn’t exist…</h1>
+      <p className="page-intro">
+        the poem you’re looking for may have been renamed, or it was never here.
       </p>
-      <Link
-        href="/poem"
-        className="text-blue-600 hover:text-blue-800 transition-colors"
-      >
-        ← back to poems
-      </Link>
+      <div className="not-found-links">
+        <Link href="/entries">all entries</Link>
+        <Link href="/home">home</Link>
+      </div>
     </main>
-  )
+  );
 }

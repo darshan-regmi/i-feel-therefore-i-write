@@ -16,7 +16,7 @@ export default function Grain() {
       style={{
         backgroundImage: NOISE,
         backgroundSize: "180px 180px",
-        opacity: 0.06,
+        opacity: 0.035,
       }}
     />
   );

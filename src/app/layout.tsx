@@ -1,20 +1,27 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { SITE_URL } from "@/lib/site";
+import { IBM_Plex_Mono, Newsreader } from "next/font/google";
+import { OG_IMAGE, OG_IMAGE_SIZE, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const newsreader = Newsreader({
+  variable: "--font-newsreader",
   subsets: ["latin"],
+  style: ["normal", "italic"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
   subsets: ["latin"],
+  weight: "400",
+  display: "swap",
 });
 
 export const viewport = {
-  themeColor: "#111827",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f6f1e7" },
+    { media: "(prefers-color-scheme: dark)", color: "#1b1815" },
+  ],
 };
 
 export const metadata: Metadata = {
@@ -29,7 +36,7 @@ export const metadata: Metadata = {
   category: "poetry",
   // No `alternates.canonical` here on purpose: root-layout metadata is
   // inherited by every route, so declaring the homepage canonical up here made
-  // /poem/doorway, /login, /liked-poem and /poems all claim to be duplicates of
+  // /poem/doorway, /login, /profile and /liked all claim to be duplicates of
   // "/". Each route declares its own instead.
   keywords: [
     // Core poetry topics
@@ -92,10 +99,9 @@ export const metadata: Metadata = {
     siteName: "i feel, therefore i write",
     images: [
       {
-        url: `${SITE_URL}/default-og-image.png`,
-        width: 1200,
-        height: 630,
-        alt: "Poetry by Darshan Regmi – i feel, therefore i write",
+        url: OG_IMAGE,
+        ...OG_IMAGE_SIZE,
+        alt: "i feel, therefore i write — poetry by Darshan Regmi",
       },
     ],
     locale: "en_US",
@@ -106,7 +112,7 @@ export const metadata: Metadata = {
     title: "Poetry by Darshan Regmi | i feel, therefore i write",
     description:
       "A personal poetry collection exploring emotion, reflection, and vulnerability. Written by Darshan Regmi.",
-    images: [`${SITE_URL}/default-og-image.png`],
+    images: [OG_IMAGE],
   },
 };
 
@@ -122,14 +128,6 @@ const siteJsonLd = {
         "A personal collection of poems by Darshan Regmi exploring love, loss, healing, and self-discovery.",
       inLanguage: "en",
       publisher: { "@id": `${SITE_URL}/#person` },
-      potentialAction: {
-        "@type": "SearchAction",
-        target: {
-          "@type": "EntryPoint",
-          urlTemplate: `${SITE_URL}/poem?q={search_term_string}`,
-        },
-        "query-input": "required name=search_term_string",
-      },
     },
     {
       "@type": "Person",
@@ -152,9 +150,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" dir="ltr" className="scroll-smooth">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${newsreader.variable} ${plexMono.variable}`}>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}

@@ -26,8 +26,8 @@ const ZZZ_CSS = `
 `;
 
 /**
- * A slow breathing ink blob: bruise core fading to void, an acid rim tracing
- * the edge, and six eyes floating inside it.
+ * A slow breathing ink blob: a solid ink body, a fine paper rim tracing the
+ * edge, and six eyes floating inside it.
  *
  * It sleeps. After a few seconds without input the eyes droop shut, the body
  * slumps and breathes deeper, and z's drift off it. Clicking it wakes it; while
@@ -102,9 +102,9 @@ export default function Blob({
             {[0, 1, 2].map((index) => (
               <span
                 key={index}
-                className="qwzx-zzz absolute left-0 top-0 italic text-acid/70"
+                className="qwzx-zzz absolute left-0 top-0 italic text-faded"
                 style={{
-                  fontFamily: "var(--font-instrument-serif)",
+                  fontFamily: "var(--font-newsreader)",
                   fontSize: `${0.85 + index * 0.32}rem`,
                   animationDelay: `${index * 1.2}s`,
                 }}
@@ -119,7 +119,7 @@ export default function Blob({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6, duration: 0.9 }}
-            className="pointer-events-none absolute inset-x-0 -bottom-6 text-center font-mono text-[9px] tracking-[0.3em] text-bone/30"
+            className="pointer-events-none absolute inset-x-0 -bottom-6 text-center font-mono text-[9px] tracking-[0.3em] text-faded"
           >
             <span className="sm:hidden">tap to wake</span>
             <span className="hidden sm:inline">click to wake</span>
@@ -175,13 +175,6 @@ export default function Blob({
             style={{ willChange: "transform" }}
           >
             <defs>
-              <radialGradient id="confessional-blob-fill" cx="48%" cy="40%" r="64%">
-                <stop offset="0%" stopColor="#6a3a96" />
-                <stop offset="36%" stopColor="#3b1d5a" />
-                <stop offset="76%" stopColor="#1a0f2a" />
-                <stop offset="100%" stopColor="#0b0a0a" />
-              </radialGradient>
-
               <filter
                 id="confessional-blob-warp"
                 x="-18%"
@@ -215,7 +208,7 @@ export default function Blob({
                 cy="200"
                 rx="150"
                 ry="163"
-                fill="url(#confessional-blob-fill)"
+                fill="currentColor"
               />
               {/* soft halo, painted as a wide stroke instead of a second filter */}
               <ellipse
@@ -224,9 +217,9 @@ export default function Blob({
                 rx="150"
                 ry="163"
                 fill="none"
-                stroke="#c6ff3d"
+                stroke="var(--paper)"
                 strokeWidth="7"
-                strokeOpacity="0.06"
+                strokeOpacity="0.12"
               />
               <ellipse
                 cx="200"
@@ -234,9 +227,9 @@ export default function Blob({
                 rx="150"
                 ry="163"
                 fill="none"
-                stroke="#c6ff3d"
+                stroke="var(--paper)"
                 strokeWidth="1.1"
-                strokeOpacity="0.55"
+                strokeOpacity="0.7"
               />
             </g>
           </svg>
