@@ -209,7 +209,7 @@
 }
 
 .index-link {
-  display: inline-block;
+  display: block;
   min-height: 44px;
   padding-block: 0.35rem;
   line-height: 1.55;
