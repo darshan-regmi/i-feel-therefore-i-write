@@ -96,7 +96,7 @@ function JsonLd() {
 
 export default async function HomePage() {
   const entries = await getEntries();
-  const latest = entries.slice(0, 10);
+  const latest = entries.slice(0, 7);
 
   return (
     <>

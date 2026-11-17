@@ -82,12 +82,15 @@ export default async function EntriesPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-
-      <h1 className="page-title">all entries</h1>
+      <div className="page-header flex justify-between items-center wrap-anywhere">
+        <h1 className="page-title">all entries</h1>
+        <p className="page-title">
+          <Link href="/liked">liked entries</Link>
+        </p>
+      </div>
       <p className="meta entries-meta">
         {entries.length} entries · newest first
       </p>
-
       <div className="entries-list">
         {groups.map((group) => (
           <section key={group.label} aria-label={group.label}>
@@ -103,7 +106,6 @@ export default async function EntriesPage() {
           </section>
         ))}
       </div>
-
       <footer className="page-footer">
         <Link href="/about">about</Link>
       </footer>
