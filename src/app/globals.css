@@ -374,6 +374,7 @@
 
 .poem-actions {
   margin-top: 3.5rem;
+  min-height: 44px;
 }
 
 .poem-nav {

@@ -1,10 +1,9 @@
-'use client'
-
-import Link from 'next/link'
-import LikeButton from "@/components/LikeButtonLazy";
+import Link from "next/link";
+import PageShell from "@/components/journal/PageShell";
+import PoemBody from "@/components/journal/PoemBody";
 
 const poem = {
-  id: "doorway", // unique ID for this poem
+  id: "doorway",
   title: "Doorway",
   content: `I stand before a doorway,
 its frame thin as a whisper,
@@ -42,33 +41,26 @@ I step.
 And the world unfolds
 not in grand gestures,
 but in the soft unraveling of light
-between one moment and the next.`
+between one moment and the next.`,
 };
 
 export default function DoorwayPoem() {
   return (
-    <main className="min-h-screen bg-white text-gray-900 flex flex-col items-center p-6 sm:p-8">
-      {/* Back Link */}
-      <div className="flex justify-start w-full mb-8">
-        <Link
-          href="/poem"
-          aria-label="Go back to poems"
-          className="text-sm text-gray-500 hover:text-gray-800 transition-colors duration-200"
-        >
-          ← back to poems
-        </Link>
-      </div>
+    <PageShell parent="/entries">
+      <article>
+        <h1 className="poem-title">{poem.title}</h1>
+        <PoemBody content={poem.content} />
 
-      <article className="w-full max-w-2xl mt-2">
-        <h1 className="text-3xl sm:text-4xl font-serif text-center mb-6">{poem.title}</h1>
+        <div className="poem-actions" aria-hidden="true" />
 
-        <div className="p-6 sm:p-8 bg-blush rounded-2xl shadow-md text-lg sm:text-xl font-light leading-relaxed whitespace-pre-line animate-fadeIn">
-          {poem.content}
-          <br />
-          <br />
-          <LikeButton poemId={poem.id} />
-        </div>
+        <nav className="poem-nav" aria-label="poem navigation">
+          <span aria-hidden="true" />
+          <Link href="/entries" className="poem-nav-all">
+            all entries
+          </Link>
+          <span aria-hidden="true" />
+        </nav>
       </article>
-    </main>
-  )
+    </PageShell>
+  );
 }
