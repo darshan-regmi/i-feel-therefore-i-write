@@ -7,18 +7,29 @@ import {
 import { unstable_cache } from 'next/cache';
 import { cache } from 'react';
 
-if (!process.env.NOTION_API_KEY) {
-  throw new Error('Missing required environment variable: NOTION_API_KEY. See .env.example.');
-}
-if (!process.env.NOTION_DATABASE_ID) {
-  throw new Error('Missing required environment variable: NOTION_DATABASE_ID. See .env.example.');
+// Read the Notion credentials lazily. Validating them at module scope used to
+// abort `next build` while it collected page data — even for routes that only
+// read Notion at request time — so a preview deploy without the secrets could
+// not build at all. Throwing from these getters keeps the failure at request
+// time, where callers already handle or report it.
+let notionClient: Client | null = null;
+
+function getNotionClient(): Client {
+  const apiKey = process.env.NOTION_API_KEY;
+  if (!apiKey) {
+    throw new Error('Missing required environment variable: NOTION_API_KEY. See .env.example.');
+  }
+  notionClient ??= new Client({ auth: apiKey });
+  return notionClient;
 }
 
-const notion = new Client({
-  auth: process.env.NOTION_API_KEY,
-});
-
-const databaseId = process.env.NOTION_DATABASE_ID;
+function getDatabaseId(): string {
+  const databaseId = process.env.NOTION_DATABASE_ID;
+  if (!databaseId) {
+    throw new Error('Missing required environment variable: NOTION_DATABASE_ID. See .env.example.');
+  }
+  return databaseId;
+}
 
 // Types
 export interface Poem {
@@ -48,9 +59,17 @@ export function clearCache() {
 /**
  * Query Notion database with pagination support
  */
+type QueryDatabaseParams = Omit<
+  Parameters<Client['databases']['query']>[0],
+  'database_id'
+>;
+
 async function queryDatabase(
-  params: Omit<Parameters<typeof notion.databases.query>[0], 'database_id'>
+  params: QueryDatabaseParams
 ): Promise<PageObjectResponse[]> {
+  const notion = getNotionClient();
+  const databaseId = getDatabaseId();
+
   try {
     let results: PageObjectResponse[] = [];
     let cursor: string | undefined = undefined;
@@ -215,7 +234,7 @@ export const getPoemById = cache(async function fetchPoemById(
     console.log(`📖 Fetching poem from Notion: ${id}`);
     const startTime = Date.now();
 
-    const page = (await notion.pages.retrieve({
+    const page = (await getNotionClient().pages.retrieve({
       page_id: id,
     })) as PageObjectResponse;
 

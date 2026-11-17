@@ -29,7 +29,7 @@ export default function LikeButton({ poemId }: { poemId: string }) {
     let unsubscribe: (() => void) | undefined;
 
     (async () => {
-      const [{ auth }, { onAuthStateChanged }, { ensureUid }] =
+      const [{ getFirebaseAuth }, { onAuthStateChanged }, { ensureUid }] =
         await Promise.all([
           import("@/lib/firebase"),
           import("firebase/auth"),
@@ -37,7 +37,7 @@ export default function LikeButton({ poemId }: { poemId: string }) {
         ]);
       if (cancelled) return;
 
-      unsubscribe = onAuthStateChanged(auth, (nextUser) => {
+      unsubscribe = onAuthStateChanged(getFirebaseAuth(), (nextUser) => {
         setUser(nextUser);
         setReady(true);
 

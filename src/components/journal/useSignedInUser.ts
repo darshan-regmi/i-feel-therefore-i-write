@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { getFirebaseAuth } from "@/lib/firebase";
 
 /**
  * Resolves the current non-anonymous account. Visitors without one are sent to
@@ -18,7 +18,7 @@ export function useSignedInUser(loginNext: string): {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    return onAuthStateChanged(auth, (nextUser) => {
+    return onAuthStateChanged(getFirebaseAuth(), (nextUser) => {
       setUser(nextUser && !nextUser.isAnonymous ? nextUser : null);
       setReady(true);
     });
