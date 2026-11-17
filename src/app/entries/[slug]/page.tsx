@@ -8,6 +8,7 @@ import {
   isCanonicalPoemSlug,
   poemHref,
 } from "@/lib/journal";
+import LikeButton from "@/components/journal/LikeButton";
 import PageShell from "@/components/journal/PageShell";
 import PoemBody from "@/components/journal/PoemBody";
 
@@ -36,6 +37,7 @@ export async function generateMetadata({
   const pageDescription =
     poem.description ?? `${excerpt} — a poem by Darshan Regmi.`;
   const pageUrl = `${SITE_URL}${poemHref(poem)}`;
+  const ogImage = `${pageUrl}/opengraph-image`;
 
   return {
     title: poem.title,
@@ -57,11 +59,20 @@ export async function generateMetadata({
       publishedTime: poem.createdAt,
       modifiedTime: poem.updatedAt,
       authors: ["Darshan Regmi"],
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: `${poem.title} — a poem by Darshan Regmi`,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: `${poem.title} | i feel, therefore i write`,
       description: pageDescription,
+      images: [ogImage],
     },
   };
 }
@@ -125,7 +136,9 @@ export default async function PoemPage({ params }: PoemRouteProps) {
         <h1 className="poem-title">{poem.title}</h1>
         <PoemBody content={poem.content} />
 
-        <div className="poem-actions" aria-hidden="true" />
+        <div className="poem-actions">
+          <LikeButton poemId={poem.id} />
+        </div>
 
         <nav className="poem-nav" aria-label="poem navigation">
           {previous ? (

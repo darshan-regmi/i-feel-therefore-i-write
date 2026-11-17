@@ -534,3 +534,121 @@
 .about-books {
   margin-top: 3.5rem;
 }
+
+/* ---------------------------------------------------------------------------
+   Auth
+--------------------------------------------------------------------------- */
+
+.auth-status {
+  margin-top: 2.5rem;
+}
+
+.field-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.field-row .field-input {
+  flex: 1;
+}
+
+.field-toggle {
+  flex: 0 0 auto;
+}
+
+.auth-google {
+  margin-top: 1.25rem;
+}
+
+.auth-note {
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--faded);
+  color: var(--faded);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.auth-note p {
+  margin: 0;
+}
+
+.auth-note-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.auth-share {
+  flex: 1 1 12rem;
+  min-width: 0;
+  color: var(--ink);
+}
+
+.auth-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.75rem;
+  margin-top: 4rem;
+}
+
+.auth-notice {
+  margin: 0.5rem 0 0;
+  color: var(--faded);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.auth-notice-action {
+  font-size: 1rem;
+}
+
+.error-code {
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   Likes
+--------------------------------------------------------------------------- */
+
+.like-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.like-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.like-button:hover .like-heart {
+  color: var(--faded);
+}
+
+.like-button[aria-pressed="true"] .like-heart {
+  color: var(--error);
+}
+
+.like-heart {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.like-error {
+  margin-top: 0.25rem;
+}
+
+.not-found-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.75rem;
+  margin-top: 2.5rem;
+}
