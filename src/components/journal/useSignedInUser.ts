@@ -18,10 +18,18 @@ export function useSignedInUser(loginNext: string): {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    return onAuthStateChanged(getFirebaseAuth(), (nextUser) => {
-      setUser(nextUser && !nextUser.isAnonymous ? nextUser : null);
+    try {
+      return onAuthStateChanged(getFirebaseAuth(), (nextUser) => {
+        setUser(nextUser && !nextUser.isAnonymous ? nextUser : null);
+        setReady(true);
+      });
+    } catch (error) {
+      // Missing Firebase config in a preview should render a signed-out state,
+      // not leave the page waiting forever.
+      console.error("could not start the auth session", error);
       setReady(true);
-    });
+      return;
+    }
   }, []);
 
   useEffect(() => {

@@ -149,6 +149,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
+  const [unavailable, setUnavailable] = useState(false);
   const [redirectChecked, setRedirectChecked] = useState(mode === "reset");
   const [user, setUser] = useState<User | null>(null);
   const [captureSettled, setCaptureSettled] = useState(false);
@@ -185,31 +186,44 @@ export default function AuthForm({ mode }: { mode: Mode }) {
 
   // Read the anonymous session's likes once, before any sign-in replaces it.
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(getFirebaseAuth(), (current) => {
-      setUser(current);
-      setReady(true);
+    let unsubscribe: (() => void) | undefined;
 
-      if (current?.isAnonymous) {
-        if (!capturePromiseRef.current) {
-          capturePromiseRef.current = getLikedPoemIds(current.uid)
-            .then((poemIds) => {
-              const snapshot = { uid: current.uid, poemIds };
-              anonSnapshotRef.current = snapshot;
-              return snapshot;
-            })
-            .catch((captureError) => {
-              console.error("could not read anonymous likes", captureError);
-              return null;
-            })
-            .finally(() => setCaptureSettled(true));
+    try {
+      unsubscribe = onAuthStateChanged(getFirebaseAuth(), (current) => {
+        setUser(current);
+        setReady(true);
+
+        if (current?.isAnonymous) {
+          if (!capturePromiseRef.current) {
+            capturePromiseRef.current = getLikedPoemIds(current.uid)
+              .then((poemIds) => {
+                const snapshot = { uid: current.uid, poemIds };
+                anonSnapshotRef.current = snapshot;
+                return snapshot;
+              })
+              .catch((captureError) => {
+                console.error("could not read anonymous likes", captureError);
+                return null;
+              })
+              .finally(() => setCaptureSettled(true));
+          }
+          return;
         }
-        return;
-      }
 
+        setCaptureSettled(true);
+      });
+    } catch (authError) {
+      // A preview deploy can be built without the public Firebase values. Do
+      // not leave the form on "checking…" forever: show a clear signed-out
+      // state so the poems stay reachable.
+      console.error("could not start the auth session", authError);
+      setUnavailable(true);
+      setReady(true);
+      setRedirectChecked(true);
       setCaptureSettled(true);
-    });
+    }
 
-    return () => unsubscribe();
+    return () => unsubscribe?.();
   }, []);
 
   // Finish a Google redirect and migrate the anonymous likes it carried.
@@ -485,6 +499,18 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   };
 
   const showForm = ready && redirectChecked;
+
+  if (unavailable) {
+    return (
+      <div role="status">
+        <p className="meta">sign-in isn’t available on this copy of the site.</p>
+        <p className="meta">
+          the poems are still open.{" "}
+          <Link href="/entries">read the entries →</Link>
+        </p>
+      </div>
+    );
+  }
 
   if (!showForm) {
     return <p className="meta auth-status">checking…</p>;
