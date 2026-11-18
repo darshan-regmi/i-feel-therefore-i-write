@@ -210,7 +210,9 @@ const NOTION_ID_RE = /^[0-9a-f]{32}$|^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-
 /**
  * Retrieve a single poem by page ID with caching. Returns null for any
  * fetch failure (invalid ID, network error, Notion 404) so callers can
- * cleanly fall through to `notFound()` without crashing the stream.
+ * cleanly fall through to `notFound()` without crashing the stream. Missing
+ * Notion credentials throw instead, so a misconfigured deploy is a 500 rather
+ * than a poem that looks deleted.
  *
  * The underlying fetch is memoised with React's `cache`, so `generateMetadata`,
  * the layout, and the page share ONE Notion call per request instead of racing
@@ -230,11 +232,16 @@ export const getPoemById = cache(async function fetchPoemById(
     return cached.poem;
   }
 
+  // Resolve the client before the catch below: missing credentials are a
+  // server-configuration error, not a missing poem. Callers must see the
+  // difference so a misconfigured deploy returns 500 instead of a 404.
+  const notion = getNotionClient();
+
   try {
     console.log(`📖 Fetching poem from Notion: ${id}`);
     const startTime = Date.now();
 
-    const page = (await getNotionClient().pages.retrieve({
+    const page = (await notion.pages.retrieve({
       page_id: id,
     })) as PageObjectResponse;
 
