@@ -268,10 +268,30 @@ export default function ConfessionalPage() {
         }
 
         if (!syncResponse.ok) {
-          setNotice("the void is busy.");
+          let detail = "";
+          try {
+            const body = (await syncResponse.json()) as { error?: unknown } | null;
+            if (body && typeof body.error === "string") detail = body.error;
+          } catch {
+            // Not JSON — fall back to the generic notice below.
+          }
+
+          console.error("confessional sync failed", syncResponse.status, detail);
+
+          // A missing service account is a deployment problem, not a busy
+          // server. Say so instead of hiding it behind a generic message.
+          const misconfigured =
+            detail.includes("FIREBASE_") ||
+            detail.toLowerCase().includes("sync is not configured");
+
+          setNotice(
+            misconfigured
+              ? "sync isn’t configured on this deploy."
+              : "the void is busy."
+          );
           setPhase("idle");
           setDigits("");
-          await sleep(2200);
+          await sleep(6000);
           if (!cancelled.current) setNotice(null);
           return;
         }
